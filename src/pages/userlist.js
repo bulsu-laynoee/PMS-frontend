@@ -237,6 +237,20 @@ const UserList = () => {
                     <Button size="sm" colorScheme="gray" variant="outline" onClick={() => setEditUser(u)}>Edit</Button>
                     <Button size="sm" colorScheme="red" onClick={() => setVehicleModalUser(u)}>Add Vehicle</Button>
                     <Button leftIcon={<FiEye />} size="sm" colorScheme="blue" variant="ghost" onClick={() => setVehicleListUser(u)}>Vehicles</Button>
+                    {u.contact_number ? (
+                      <Button size="sm" colorScheme="green" variant="outline" onClick={() => { window.location.href = `sms:${u.contact_number}`; }}>Message</Button>
+                    ) : null}
+                    <Button size="sm" colorScheme="teal" variant="outline" onClick={async () => {
+                      try {
+                        // create conversation between current admin and the user
+                        const res = await api.post('/conversations', { user_ids: [u.id] });
+                        const conv = res.data.data || res.data;
+                        // navigate to messages page (simple approach: replace location)
+                        window.location.href = '/messages';
+                      } catch (e) {
+                        console.error('failed to create conversation', e);
+                      }
+                    }}>Chat</Button>
                   </HStack>
                   <Box mt={2} fontSize="12px">{u.vehicle_count ? `${u.vehicle_count} vehicle(s)` : ''}</Box>
                 </Td>

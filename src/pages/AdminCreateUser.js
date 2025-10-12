@@ -86,6 +86,12 @@ export default function AdminCreateUser({ onSuccess }) {
       // Ensure CSRF cookie is initialized for Sanctum-protected endpoints
       await api.initCsrf();
       const data = new FormData();
+      // If creating a guard, include username explicitly
+      if (role === 'Guard') {
+        data.append('username', form.username || '');
+        // include contact number for guards if provided
+        if (form.contact_number) data.append('contact_number', form.contact_number);
+      }
       data.append('firstname', form.firstname);
       data.append('lastname', form.lastname);
       data.append('email', form.email);
@@ -245,10 +251,13 @@ export default function AdminCreateUser({ onSuccess }) {
           )}
 
           {role === 'Guard' && (
-            <Stack direction={{ base: 'column', md: 'row' }} spacing={3}>
-              <Input name="username" placeholder="Username" value={form.username || ''} onChange={onChange} />
-              <Input name="position" placeholder="Position" value={form.position} onChange={onChange} />
-            </Stack>
+            <>
+              <Stack direction={{ base: 'column', md: 'row' }} spacing={3}>
+                <Input name="username" placeholder="Username" value={form.username || ''} onChange={onChange} />
+                <Input name="position" placeholder="Position" value={form.position} onChange={onChange} />
+                <Input name="contact_number" placeholder="Contact number" value={form.contact_number || ''} onChange={onChange} />
+              </Stack>
+            </>
           )}
 
           {role !== 'Guard' && (
