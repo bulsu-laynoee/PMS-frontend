@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
 import { Button, Input, Select, Stack, Box, FormLabel } from '@chakra-ui/react';
-import { useAlert } from 'context/AlertContext';
+// import { useAlert } from 'context/AlertContext';
 
 export default function AdminCreateUser({ onSuccess }) {
   // Notify other parts of the app that a modal (create user) is open so

@@ -26,7 +26,7 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
     }
   };
 
-  useEffect(() => { if (user) load(); }, [user]);
+  useEffect(() => { if (user) load(); }, [user, load]);
 
   const handleSuccess = () => {
     setEditing(null);

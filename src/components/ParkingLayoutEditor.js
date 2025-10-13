@@ -91,7 +91,7 @@ const ParkingLayoutEditor = ({
   const [drawingLine, setDrawingLine] = useState(null);
   const [selectedElement, setSelectedElement] = useState(null);
   const stageRef = useRef(null);
-  const layerRef = useRef(null);
+  // const layerRef = useRef(null); // Commented out as it's not used
   const [externalModalOpen, setExternalModalOpen] = useState(false);
 
   // Notify parent when a modal/inspector in the editor is opened so the parent
@@ -223,6 +223,10 @@ const ParkingLayoutEditor = ({
           width: 0,
           height: 0
         });
+        break;
+      default:
+        // Handle other modes or do nothing
+        break;
         break;
       case 'line':
         setIsDrawing(true);
@@ -483,25 +487,25 @@ const ParkingLayoutEditor = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [editorMode, selectedSpace]);
 
-  const handleAddSpace = () => {
-    const newSpace = {
-      x: 50,
-      y: 50,
-      width: 100,
-      height: 200,
-      id: Date.now(),
-      status: 'available',
-      label: `Space ${parkingSpaces.length + 1}`,
-      type: 'standard'
-    };
-    setParkingSpaces([...parkingSpaces, newSpace]);
-  };
+  // const handleAddSpace = () => {
+  //   const newSpace = {
+  //     x: 50,
+  //     y: 50,
+  //     width: 100,
+  //     height: 200,
+  //     id: Date.now(),
+  //     status: 'available',
+  //     label: `Space ${parkingSpaces.length + 1}`,
+  //     type: 'standard'
+  //   };
+  //   setParkingSpaces([...parkingSpaces, newSpace]);
+  // };
 
-  const handleSpaceClick = (space) => {
-    if (editorMode === 'edit') {
-      setSelectedSpace(space);
-    }
-  };
+  // const handleSpaceClick = (space) => {
+  //   if (editorMode === 'edit') {
+  //     setSelectedSpace(space);
+  //   }
+  // };
 
   const handleDragEnd = (e, id) => {
     const updatedSpaces = parkingSpaces.map(space => {
@@ -517,31 +521,31 @@ const ParkingLayoutEditor = ({
     setParkingSpaces(updatedSpaces);
   };
 
-  const handleTransformEnd = (e, id) => {
-    const node = e.target;
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
-    const rotation = node.rotation();
+  // const handleTransformEnd = (e, id) => {
+  //   const node = e.target;
+  //   const scaleX = node.scaleX();
+  //   const scaleY = node.scaleY();
+  //   const rotation = node.rotation();
 
-    // Reset scale to 1 and update width/height instead
-    node.scaleX(1);
-    node.scaleY(1);
+  //   // Reset scale to 1 and update width/height instead
+  //   node.scaleX(1);
+  //   node.scaleY(1);
 
-    const updatedSpaces = parkingSpaces.map(space => {
-      if (space.id === id) {
-        return {
-          ...space,
-          x: node.x(),
-          y: node.y(),
-          width: Math.max(50, node.width() * scaleX), // minimum width of 50
-          height: Math.max(50, node.height() * scaleY), // minimum height of 50
-          rotation: rotation // add rotation
-        };
-      }
-      return space;
-    });
-    setParkingSpaces(updatedSpaces);
-  };
+  //   const updatedSpaces = parkingSpaces.map(space => {
+  //     if (space.id === id) {
+  //       return {
+  //         ...space,
+  //         x: node.x(),
+  //         y: node.y(),
+  //         width: Math.max(50, node.width() * scaleX), // minimum width of 50
+  //         height: Math.max(50, node.height() * scaleY), // minimum height of 50
+  //         rotation: rotation // add rotation
+  //       };
+  //     }
+  //     return space;
+  //   });
+  //   setParkingSpaces(updatedSpaces);
+  // };
 
   const handleSave = async () => {
     try {

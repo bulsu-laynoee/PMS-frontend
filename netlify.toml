@@ -1,0 +1,7 @@
+[build]
+  publish = "build"
+  command = "CI=false npm run build"
+
+[build.environment]
+  REACT_APP_API_URL = "https://bulsupms.com/api"
+  CI = "false"

@@ -27,7 +27,7 @@ const EditorToolbar = ({
         placement: 'right',
       });
     });
-  }, []);
+  }, [tools]);
 
   const updateSpaceDimensions = (width, height) => {
     if (selectedSpace) {
