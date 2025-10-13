@@ -14,6 +14,7 @@ import ParkingAssignmentPage from 'pages/ParkingAssignmentPage';
 import EditParkingLayout from 'pages/EditParkingLayout';
 import Settings from 'pages/Settings';
 import AdminCreateUser from 'pages/AdminCreateUser';
+import IncidentManagement from 'pages/IncidentManagement';
 
 const MainRoutes = () => {
     return (
@@ -32,6 +33,7 @@ const MainRoutes = () => {
                     <Route path="admin/create-user" element={<AdminCreateUser />} />
                     <Route path="editparkingspace" element={<EditParking />} />
                     <Route path="messages" element={<Messages />} />
+                    <Route path="incidents" element={<IncidentManagement />} />
                     <Route path="pendinglist" element={<PendingList />} />
                     <Route path="settings" element={<Settings />} />
                 </Route>

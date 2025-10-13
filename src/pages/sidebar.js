@@ -5,7 +5,8 @@ import {
   FaCar,
   FaUsers,
   FaEnvelope,
-  FaCog
+  FaCog,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import 'assets/sidebar.css';
 import { logout } from '../utils/auth';
@@ -58,6 +59,12 @@ const Sidebar = () => {
           <Link to="/home/messages">
             <FaEnvelope className="sidebar-icon" />
             MESSAGES
+          </Link>
+        </li>
+        <li className={isActive('/home/incidents') ? 'active' : ''}>
+          <Link to="/home/incidents">
+            <FaExclamationTriangle className="sidebar-icon" />
+            INCIDENTS
           </Link>
         </li>
       </ul>

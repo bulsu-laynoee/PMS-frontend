@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../utils/api';
+import api, { getImageUrl } from '../utils/api';
 import Modal from 'components/Modal';
 import AdminCreateUser from './AdminCreateUser';
 import VehicleModal from 'components/VehicleModal';
@@ -202,13 +202,13 @@ const UserList = () => {
                           <Tag size="sm" colorScheme="gray" variant="subtle">—</Tag>
                         )}
                         {v.or_path ? (
-                          <Link href={`http://localhost:8000/api/image/${v.or_path}`} isExternal style={{ marginLeft: 6 }}><IconButton aria-label="OR" icon={<FiFileText />} size="xs" /></Link>
+                          <Link href={getImageUrl(v.or_path)} isExternal style={{ marginLeft: 6 }}><IconButton aria-label="OR" icon={<FiFileText />} size="xs" /></Link>
                         ) : null}
                       </WrapItem>
                     ))}
                     {/* Fallback to user-level OR if no vehicle ORs present */}
                     {((orNumbersByUser[String(u.id)] || []).length === 0 && u.or_path) ? (
-                      <WrapItem><Link href={`http://localhost:8000/api/image/${u.or_path}`} isExternal><IconButton aria-label="OR" icon={<FiFileText />} size="sm" /></Link></WrapItem>
+                      <WrapItem><Link href={getImageUrl(u.or_path)} isExternal><IconButton aria-label="OR" icon={<FiFileText />} size="sm" /></Link></WrapItem>
                     ) : null}
                   </Wrap>
                 </Td>
@@ -222,13 +222,13 @@ const UserList = () => {
                           <Tag size="sm" colorScheme="gray" variant="subtle">—</Tag>
                         )}
                         {v.cr_path ? (
-                          <Link href={`http://localhost:8000/api/image/${v.cr_path}`} isExternal style={{ marginLeft: 6 }}><IconButton aria-label="CR" icon={<FiDownload />} size="xs" /></Link>
+                          <Link href={getImageUrl(v.cr_path)} isExternal style={{ marginLeft: 6 }}><IconButton aria-label="CR" icon={<FiDownload />} size="xs" /></Link>
                         ) : null}
                       </WrapItem>
                     ))}
                     {/* Fallback to user-level CR if no vehicle CRs present */}
                     {((crNumbersByUser[String(u.id)] || []).length === 0 && u.cr_path) ? (
-                      <WrapItem><Link href={`http://localhost:8000/api/image/${u.cr_path}`} isExternal><IconButton aria-label="CR" icon={<FiDownload />} size="sm" /></Link></WrapItem>
+                      <WrapItem><Link href={getImageUrl(u.cr_path)} isExternal><IconButton aria-label="CR" icon={<FiDownload />} size="sm" /></Link></WrapItem>
                     ) : null}
                   </Wrap>
                 </Td>

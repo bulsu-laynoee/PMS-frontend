@@ -7,6 +7,7 @@ import {
   FaEnvelope,
   FaCog,
   FaBell,
+  FaExclamationTriangle,
 } from 'react-icons/fa';
 import { getUserName, getToken } from 'utils/auth';
 import api from 'utils/api';
@@ -49,6 +50,11 @@ const Dashboard = () => {
         <div className="card" onClick={() => navigate('/home/pendinglist')}>
           <FaClock className="card-icon" />
           <h3>Pending List</h3>
+        </div>
+
+        <div className="card" onClick={() => navigate('/home/incidents')}>
+          <FaExclamationTriangle className="card-icon" />
+          <h3>Incident Reports</h3>
         </div>
 
         <div className="card" onClick={() => navigate('/home/notifications')}>

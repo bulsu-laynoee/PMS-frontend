@@ -1,10 +1,20 @@
 import axios from "axios";
 import { getToken } from "./auth";
 
+// Export the base URL for direct access - use environment variable or fallback
+export const API_BASE_URL = process.env.REACT_APP_API_URL?.replace('/api', '') || "http://localhost:8000";
+
 // Create axios instance with base API URL and enable credentials for CSRF
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:8000/api",
   withCredentials: true,
+});
+
+// Debug logging to verify API URL
+console.log('🔗 Frontend API Configuration:', {
+  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
+  baseURL: api.defaults.baseURL,
+  timestamp: new Date().toISOString()
 });
 
 // Attach token to requests if available
@@ -22,8 +32,8 @@ api.interceptors.request.use(
 // Helper to initialize Sanctum CSRF cookie
 export const initCsrf = async () => {
   // Try to derive the backend origin from the api instance baseURL.
-  // If baseURL is like 'http://localhost:8000/api' we want 'http://localhost:8000'.
-  const base = (api.defaults && api.defaults.baseURL) || "http://localhost:8000/api";
+  // If baseURL is like 'https://bulsupms.com/api' we want 'https://bulsupms.com'.
+  const base = (api.defaults && api.defaults.baseURL) || process.env.REACT_APP_API_URL || "http://localhost:8000/api";
   const origin = base.replace(/\/api\/?$/, "");
 
   const candidates = [
@@ -64,5 +74,24 @@ export const initCsrf = async () => {
 
 // Make initCsrf available as a method on the api instance for convenience
 api.initCsrf = initCsrf;
+
+// Helper function to build image URLs using the API base URL
+export const getImageUrl = (imagePath) => {
+  if (!imagePath) return '';
+  
+  // If it's already a full URL, return as-is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // Build the full URL using the API base URL
+  const base = (api.defaults && api.defaults.baseURL) || process.env.REACT_APP_API_URL || "http://localhost:8000/api";
+  const origin = base.replace(/\/api\/?$/, '');
+  
+  // Remove leading slash if present to avoid double slashes
+  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+  
+  return `${origin}/api/image/${cleanPath}`;
+};
 
 export default api;

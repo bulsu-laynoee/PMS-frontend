@@ -31,7 +31,7 @@ export default function PendingList() {
         // try common backend fallbacks before failing.
         let contentType = (res.headers.get('content-type') || '').toLowerCase();
         if (!contentType.includes('application/json')) {
-          const fallbacks = ['http://localhost:8000', 'http://127.0.0.1', 'http://localhost'];
+          const fallbacks = [process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost'];
           let ok = false;
           for (const b of fallbacks) {
             try {
@@ -106,7 +106,7 @@ export default function PendingList() {
       console.debug('[PendingList] Approve payload', { url: `${api.defaults.baseURL}/users/${user.id}`, body });
       try {
         // Build absolute URL pointing to backend origin (api.defaults.baseURL expected to be like 'http://localhost:8000/api')
-        const base = (api && api.defaults && api.defaults.baseURL) ? api.defaults.baseURL : 'http://127.0.0.1:8000/api';
+        const base = (api && api.defaults && api.defaults.baseURL) ? api.defaults.baseURL : process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
         const origin = String(base).replace(/\/api\/?$/, '');
         const url = `${origin}/api/users/${user.id}`;
         console.debug('[PendingList] Approve absolute URL', url);

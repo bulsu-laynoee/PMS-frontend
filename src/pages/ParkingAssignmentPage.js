@@ -228,7 +228,7 @@ const ParkingAssignmentPage = () => {
             // If backend uses a background_image field, normalize to a usable image_path (full URL when possible)
             if (processedLayout.background_image && !processedLayout.image_path) {
                 try {
-                    const base = (api.defaults && api.defaults.baseURL) || 'http://localhost:8000/api';
+                    const base = (api.defaults && api.defaults.baseURL) || process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
                     const origin = base.replace(/\/api\/?$/, '');
                     const bg = processedLayout.background_image;
                     if (/^https?:\/\//i.test(bg)) {
