@@ -21,9 +21,40 @@ const IncidentManagement = () => {
         },
       });
 
+      const text = await response.text();
+      let data = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (err) {
+        console.error('Failed to parse incidents response JSON:', err, 'raw:', text);
+      }
+
       if (response.ok) {
-        const data = await response.json();
-        setIncidents(data.data || data || []);
+        // Backend returns { success: true, data: [...] }
+        // Accept also { incidents: [...] } or a raw array
+        let incidentsArr = [];
+        if (Array.isArray(data)) {
+          incidentsArr = data;
+        } else if (data && Array.isArray(data.data)) {
+          incidentsArr = data.data;
+        } else if (data && Array.isArray(data.incidents)) {
+          incidentsArr = data.incidents;
+        } else {
+          console.warn('Unexpected incidents payload shape:', data);
+          incidentsArr = [];
+        }
+
+        // Add normalized fields for safer comparisons in the UI
+        const normalized = incidentsArr.map((inc) => ({
+          ...inc,
+          _status: inc.status ? String(inc.status).toLowerCase() : null,
+          _severity: inc.severity ? String(inc.severity).toLowerCase() : null,
+        }));
+
+        console.debug('Fetched incidents:', normalized);
+        setIncidents(normalized);
+      } else {
+        console.error('Failed fetching incidents:', response.status, text, data);
       }
     } catch (error) {
       console.error('Error fetching incidents:', error);
@@ -40,8 +71,9 @@ const IncidentManagement = () => {
     try {
       const token = localStorage.getItem('token');
       const payload = { status };
-      if (status === 'closed' && resolvedBy) {
-        payload.resolved_by = resolvedBy;
+      if (status === 'closed') {
+        if (resolvedBy) payload.resolved_by = resolvedBy;
+        // controller accepts ISO date string
         payload.resolved_at = new Date().toISOString();
       }
 
@@ -54,9 +86,16 @@ const IncidentManagement = () => {
         body: JSON.stringify(payload),
       });
 
+      const text = await response.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (err) { console.error('Invalid JSON from update:', err, text); }
+
       if (response.ok) {
+        console.debug('Incident updated:', data);
         fetchIncidents(); // Refresh the list
         setSelectedIncident(null);
+      } else {
+        console.error('Failed to update incident:', response.status, data || text);
       }
     } catch (error) {
       console.error('Error updating incident:', error);
@@ -82,8 +121,10 @@ const IncidentManagement = () => {
   };
 
   const filteredIncidents = incidents.filter(incident => {
-    const statusMatch = filterStatus === 'all' || incident.status === filterStatus;
-    const severityMatch = filterSeverity === 'all' || incident.severity === filterSeverity;
+    const incidentStatus = incident._status || (incident.status ? String(incident.status).toLowerCase() : '');
+    const incidentSeverity = incident._severity || (incident.severity ? String(incident.severity).toLowerCase() : '');
+    const statusMatch = filterStatus === 'all' || incidentStatus === filterStatus;
+    const severityMatch = filterSeverity === 'all' || incidentSeverity === filterSeverity;
     return statusMatch && severityMatch;
   });
 
