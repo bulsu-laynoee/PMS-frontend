@@ -12,6 +12,24 @@ const IncidentManagement = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSeverity, setFilterSeverity] = useState('all');
 
+  // Dev helper: allow injecting a token via URL for quick testing
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get('dev_token') || params.get('token');
+      if (urlToken) {
+        localStorage.setItem('token', urlToken);
+        // remove token from URL to avoid accidental leaks
+        const url = new URL(window.location.href);
+        url.searchParams.delete('dev_token');
+        url.searchParams.delete('token');
+        window.history.replaceState({}, document.title, url.pathname + url.search);
+      }
+    } catch (err) {
+      // ignore in environments without URL available
+    }
+  }, []);
+
   const fetchIncidents = useCallback(async () => {
     try {
       setLoading(true);
