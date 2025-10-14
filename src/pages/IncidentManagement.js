@@ -7,6 +7,8 @@ const IncidentManagement = () => {
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIncident, setSelectedIncident] = useState(null);
+  const [error, setError] = useState(null);
+  const [unauthenticated, setUnauthenticated] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSeverity, setFilterSeverity] = useState('all');
 
@@ -29,7 +31,7 @@ const IncidentManagement = () => {
         console.error('Failed to parse incidents response JSON:', err, 'raw:', text);
       }
 
-      if (response.ok) {
+  if (response.ok) {
         // Backend returns { success: true, data: [...] }
         // Accept also { incidents: [...] } or a raw array
         let incidentsArr = [];
@@ -55,6 +57,12 @@ const IncidentManagement = () => {
         setIncidents(normalized);
       } else {
         console.error('Failed fetching incidents:', response.status, text, data);
+        if (response.status === 401) {
+          setUnauthenticated(true);
+          setError(data && data.message ? data.message : 'Unauthenticated');
+        } else {
+          setError(data && data.message ? data.message : `Error ${response.status}`);
+        }
       }
     } catch (error) {
       console.error('Error fetching incidents:', error);
@@ -96,6 +104,12 @@ const IncidentManagement = () => {
         setSelectedIncident(null);
       } else {
         console.error('Failed to update incident:', response.status, data || text);
+        if (response.status === 401) {
+          setUnauthenticated(true);
+          setError(data && data.message ? data.message : 'Unauthenticated');
+        } else {
+          setError(data && data.message ? data.message : `Error ${response.status}`);
+        }
       }
     } catch (error) {
       console.error('Error updating incident:', error);
@@ -138,6 +152,28 @@ const IncidentManagement = () => {
 
   return (
     <div className="incident-management p-6">
+      {unauthenticated && (
+        <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
+          <div className="flex items-center justify-between">
+            <div>
+              <strong>Unauthenticated:</strong> {error || 'You must be logged in to view incidents.'}
+            </div>
+            <div>
+              <button
+                onClick={() => { window.location.href = '/login'; }}
+                className="px-3 py-1 bg-yellow-400 text-white rounded"
+              >
+                Login
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {error && !unauthenticated && (
+        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-400 text-red-800 rounded">
+          <strong>Error:</strong> {error}
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">Incident Management</h1>
         
