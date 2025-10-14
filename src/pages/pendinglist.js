@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import 'assets/pendinglist.css';
 import { FaFilePdf, FaCheck, FaEye } from 'react-icons/fa';
-import api from '../utils/api';
+import api, { API_BASE_URL } from '../utils/api';
 import { useAlert } from 'context/AlertContext';
 
 export default function PendingList() {
@@ -20,56 +20,38 @@ export default function PendingList() {
     async function load() {
       setLoading(true);
       try {
-        // Try relative API first (works when frontend is served by backend or proxy is configured)
-        let res = await fetch('/api/users', { credentials: 'include' });
-        console.debug('[PendingList] initial /api/users response', { url: res.url, status: res.status, ok: res.ok });
-
-        // If unauthorized, inform the admin to login; do not try anonymous fallbacks
-        if (res.status === 401) { setAuthRequired(true); setLoading(false); return; }
-
-        // If the relative fetch returned a non-JSON payload (for example CRA dev server index.html),
-        // try common backend fallbacks before failing.
-        let contentType = (res.headers.get('content-type') || '').toLowerCase();
-        if (!contentType.includes('application/json')) {
-          const fallbacks = [process.env.REACT_APP_API_URL?.replace('/api', '') || 'http://localhost:8000', 'http://127.0.0.1', 'http://localhost'];
-          let ok = false;
-          for (const b of fallbacks) {
-            try {
-              const testUrl = `${b.replace(/\/$/, '')}/api/users`;
-              const fres = await fetch(testUrl, { credentials: 'include' });
-              console.debug('[PendingList] tried backend fallback', { base: b, url: fres.url, status: fres.status, ok: fres.ok, contentType: fres.headers.get('content-type') });
-              if (fres.status === 401) { setAuthRequired(true); ok = true; res = fres; break; }
-              const fct = (fres.headers.get('content-type') || '').toLowerCase();
-              if (fres.ok && fct.includes('application/json')) { ok = true; res = fres; break; }
-            } catch (e) {
-              // try next fallback
-              console.debug('[PendingList] fallback fetch failed for', b, e?.message || e);
-            }
-          }
-          if (!ok) {
-            // Read original response text for a better error message
-            const text = await res.text();
-            const snippet = String(text).slice(0, 800);
-            console.error('[PendingList] API returned non-JSON response and fallbacks failed', { url: res.url, status: res.status, snippet });
-            if (res.status === 401) {
-              setAuthRequired(true);
-              setLoading(false);
-              return;
-            }
-            throw new Error(`API returned non-JSON response (status ${res.status}). First characters: ${snippet.startsWith('<') ? '[HTML]' : snippet.slice(0, 120)}`);
-          }
+        // Prefer configured axios instance which already contains baseURL and withCredentials
+        // Use API_BASE_URL (origin without /api) for building absolute endpoints when needed.
+        let response;
+        try {
+          response = await api.get('/users');
+          console.debug('[PendingList] api.get /users', { url: api.defaults.baseURL + '/users', status: response.status });
+        } catch (firstErr) {
+          // If axios failed because the dev server served SPA HTML on relative paths, try absolute origin fallback
+          console.debug('[PendingList] api.get /users failed, trying absolute origin fallback', firstErr?.message || firstErr);
+          const origin = API_BASE_URL.replace(/\/$/, '');
+          const absUrl = `${origin}/api/users`;
+          const absRes = await fetch(absUrl, { credentials: 'include' });
+          console.debug('[PendingList] fallback fetch', { url: absRes.url, status: absRes.status });
+          if (absRes.status === 401) { setAuthRequired(true); setLoading(false); return; }
+          const text = await absRes.text();
+          try { response = { data: JSON.parse(text), status: absRes.status }; } catch (_) { throw new Error(`API returned non-JSON response (status ${absRes.status}). First chars: ${String(text).slice(0,200)}`); }
         }
 
-        const json = await res.json();
+        const json = response.data;
         const data = json?.data || json;
-        // filter only pending users
-        const pending = (data || []).filter(u => (u.from_pending === 1 || u.from_pending === true || String(u.from_pending) === '1'));
+        // filter only pending users, checking both top-level and user_details
+        const pending = (data || []).filter(u =>
+          (u.from_pending === 1 || u.from_pending === true || String(u.from_pending) === '1') ||
+          (u.user_details && (u.user_details.from_pending === 1 || u.user_details.from_pending === true || String(u.user_details.from_pending) === '1'))
+        );
         setUsers(pending);
       } catch (e) {
         console.error('Failed to load pending users', e);
         setErrorMessage(e.message || String(e));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, []);
@@ -104,29 +86,28 @@ export default function PendingList() {
         from_pending: 0
       };
       console.debug('[PendingList] Approve payload', { url: `${api.defaults.baseURL}/users/${user.id}`, body });
+      // Use axios instance to perform the update so baseURL and credentials are honored
       try {
-        // Build absolute URL pointing to backend origin (api.defaults.baseURL expected to be like 'http://localhost:8000/api')
-        const base = (api && api.defaults && api.defaults.baseURL) ? api.defaults.baseURL : process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api';
-        const origin = String(base).replace(/\/api\/?$/, '');
+        const res = await api.put(`/users/${user.id}`, body);
+        console.debug('[PendingList] Approve response', { status: res.status, data: res.data });
+        if (res.status >= 400) throw new Error('Failed to approve');
+      } catch (err) {
+        // If axios failed, attempt an absolute origin PUT to help dev setups where relative /api is served by CRA
+        console.debug('[PendingList] api.put failed, trying absolute origin fallback', err?.message || err);
+        const origin = API_BASE_URL.replace(/\/$/, '');
         const url = `${origin}/api/users/${user.id}`;
-        console.debug('[PendingList] Approve absolute URL', url);
         const fres = await fetch(url, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-        console.debug('[PendingList] Approve fetch status', { status: fres.status, ok: fres.ok, url: fres.url });
         if (!fres.ok) {
           let msg = 'Failed to approve';
           try {
             const txt = await fres.text();
             console.error('[PendingList] Approve failed response body:', txt.slice(0, 2000));
-            // try parse json
             try { const dj = JSON.parse(txt); if (dj?.message) msg = dj.message; else if (dj?.errors) msg = Object.values(dj.errors).flat().join('\n'); } catch (_) {}
           } catch (e) {
             console.error('[PendingList] Failed to read approve response body', e);
           }
           throw new Error(msg);
         }
-      } catch (err) {
-        console.error('[PendingList] Approve request error', err);
-        throw err;
       }
       // refresh list
       setUsers(users.filter(u => u.id !== user.id));
