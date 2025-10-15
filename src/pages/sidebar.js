@@ -27,13 +27,12 @@ const Sidebar = () => {
       <div className="sidebar-logo">
         <img
           src={require('assets/logo.png')}
-          alt="Logo"
+          alt="Bulacan State University Logo"
           className="logo-image"
         />
-        <div className="logo-title">
-          <div className="logo-line1">PARKING MANAGEMENT</div>
-          <div className="logo-line2">SYSTEM</div>
-        </div>
+        <h1 className="logo-title">
+          PARKING MANAGEMENT SYSTEM
+        </h1>
       </div>
 
       {/* Menu items */}
@@ -56,12 +55,12 @@ const Sidebar = () => {
             USER LIST
           </Link>
         </li>
-         <li className={isActive('/home/messages') ? 'active' : ''}>
+        <li className={isActive('/home/messages') ? 'active' : ''}>
           <Link to="/home/messages">
             <FaEnvelope className="sidebar-icon" />
             MESSAGES
           </Link>
-        </li>       
+        </li>
         <li className={isActive('/home/incidents') ? 'active' : ''}>
           <Link to="/home/incidents">
             <FaExclamationTriangle className="sidebar-icon" />
