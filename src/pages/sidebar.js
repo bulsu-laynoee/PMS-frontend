@@ -1,5 +1,6 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   FaTachometerAlt,
   FaCar,
@@ -8,84 +9,104 @@ import {
   FaCog,
   FaSignOutAlt,
   FaExclamationTriangle
-} from 'react-icons/fa';
-import 'assets/sidebar.css';
-import { logout } from '../utils/auth';
+} from "react-icons/fa";
+import "assets/Sidebar.css";
+import { clearAuth, getToken } from "../utils/auth"; //  use helpers
 
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isActive = (path) =>
-    location.pathname === path ||
-    location.pathname.startsWith(path + '/') ||
-    location.pathname === path.replace('/home', '');
+  const handleLogout = async () => {
+    try {
+      const token = getToken(); // centralized token getter
+
+      if (token) {
+        await axios.post(
+          "http://localhost:8000/api/logout",
+          {},
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      // clear tokens in one call
+      clearAuth();
+      navigate("/sign-in");
+    }
+  };
 
   return (
     <div className="sidebar">
-      {/* Centered logo + title */}
-      <div className="sidebar-logo">
-        <img
-          src={require('assets/logo.png')}
-          alt="Logo"
-          className="logo-image"
-        />
-        <div className="logo-title">
-          <div className="logo-line1">PARKING MANAGEMENT</div>
-          <div className="logo-line2">SYSTEM</div>
+      <div>
+        {/* Logo (not clickable) */}
+        <div className="sidebar-logo">
+          <img
+            src={require("assets/images/logo.png")}
+            alt="Logo"
+            className="logo-image"
+          />
+          <div className="logo-title">
+            <div className="logo-line1">PARKING MANAGEMENT</div>
+            <div className="logo-line2">SYSTEM</div>
+          </div>
         </div>
+
+        {/* Menu */}
+        <ul className="sidebar-menu">
+          <li className={location.pathname === "/dashboard" ? "active" : ""}>
+            <a href="/dashboard">
+              <FaTachometerAlt className="sidebar-icon" />
+              DASHBOARD
+            </a>
+          </li>
+          <li
+            className={location.pathname === "/parking-spaces" ? "active" : ""}
+          >
+            <a href="/parking-spaces">
+              <FaCar className="sidebar-icon" />
+              PARKING SPACES
+            </a>
+          </li>
+          <li className={location.pathname === "/user-list" ? "active" : ""}>
+            <a href="/user-list">
+              <FaUsers className="sidebar-icon" />
+              USER LIST
+            </a>
+          </li>
+          <li className={location.pathname === "/messages" ? "active" : ""}>
+            <a href="/messages">
+              <FaEnvelope className="sidebar-icon" />
+              MESSAGES
+            </a>
+          </li>
+          <li className={location.pathname === "/incidents" ? "active" : ""}>
+            <a href="/incidents">
+              <FaExclamationTriangle className="sidebar-icon" />
+              INCIDENT REPORT
+            </a>
+          </li>
+          <li className={location.pathname === "/settings" ? "active" : ""}>
+            <a href="/settings">
+              <FaCog className="sidebar-icon" />
+              SETTINGS
+            </a>
+          </li>
+        </ul>
       </div>
 
-      {/* Menu items */}
+      {/* Logout Button */}
       <ul className="sidebar-menu">
-        <li className={isActive('/home/dashboard') ? 'active' : ''}>
-          <Link to="/home/dashboard">
-            <FaTachometerAlt className="sidebar-icon" />
-            DASHBOARD
-          </Link>
-        </li>
-        <li className={isActive('/home/parkingspaces') ? 'active' : ''}>
-          <Link to="/home/parkingspaces">
-            <FaCar className="sidebar-icon" />
-            PARKING SPACES
-          </Link>
-        </li>
-        <li className={isActive('/home/userlist') ? 'active' : ''}>
-          <Link to="/home/userlist">
-            <FaUsers className="sidebar-icon" />
-            USER LIST
-          </Link>
-        </li>
-         <li className={isActive('/home/messages') ? 'active' : ''}>
-          <Link to="/home/messages">
-            <FaEnvelope className="sidebar-icon" />
-            MESSAGES
-          </Link>
-        </li>       
-        <li className={isActive('/home/incidents') ? 'active' : ''}>
-          <Link to="/home/incidents">
-            <FaExclamationTriangle className="sidebar-icon" />
-            INCIDENTS REPORT
-          </Link>
-        </li>
-        <li className={isActive('/home/settings') ? 'active' : ''}>
-          <Link to="/home/settings">
-            <FaCog className="sidebar-icon" />
-            SETTINGS
-          </Link>
+        <li>
+          <button onClick={handleLogout} className="logout-btn">
+            <FaSignOutAlt className="sidebar-icon" />
+            <strong>LOGOUT</strong>
+          </button>
         </li>
       </ul>
-
-      {/* Logout at bottom */}
-      <div className="sidebar-footer">
-        <button
-          className="logout-btn"
-          onClick={() => logout(navigate)}
-        >
-          <FaSignOutAlt className="sidebar-icon" />
-          LOGOUT
-        </button>
-      </div>
     </div>
   );
 };
