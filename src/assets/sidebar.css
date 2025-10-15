@@ -45,9 +45,9 @@
 }
 
 .logo-image {
-  width: 230px; /* Adjust logo size */
-  height: 230px;
-  object-fit: contain; /* Use 'contain' to prevent distortion */
+  width: 130px; /* Adjust logo size */
+  height: 130px;
+  object-fit: cover; /* Use 'contain' to prevent distortion */
   border-radius: 50%;
   margin-bottom: 12px;
 }
