@@ -6,7 +6,7 @@
 }
 
 .sidebar {
-  background-color: #c04a4a; /* Matches the red in your image */
+  background-color: #c04a4a; 
   min-width: 270px;
   height: 100vh;
   color: white;
@@ -17,7 +17,7 @@
   position: fixed;
   left: 0;
   top: 0;
-  padding: 40px 0; /* Adjusted padding to center the content vertically */
+  padding: 20px 15px;
   z-index: 1000;
 }
 
@@ -38,15 +38,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
   text-decoration: none;
   color: white;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
 }
 
 .logo-image {
-  width: 100px; /* Smaller logo size */
-  height: 100px;
+  width: 130px;
+  height: 130px;
   object-fit: cover;
   border-radius: 50%;
   margin-bottom: 8px;
@@ -58,29 +57,31 @@
 }
 
 .logo-line1 {
-  font-size: 15px; /* Adjusted font size */
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.6px;
 }
 
 .logo-line2 {
-  font-size: 15px; /* Adjusted font size */
+  font-size: 17px;
   font-weight: 700;
+  
 }
 
 /* Menu */
 .sidebar-menu {
   list-style: none;
-  padding: 0 15px; /* Padding on the list itself */
+  padding: 0;
   margin: 0;
   flex-grow: 1;
 }
 
 .sidebar-menu li {
-  margin-bottom: 35px; /* Increased spacing between items */
+  margin-bottom: 10px;
   cursor: pointer;
-  font-size: 16px; /* Adjusted font size */
+  font-size: 13px;
   border-radius: 8px;
+  
 }
 
 .sidebar-menu li a {
@@ -88,31 +89,25 @@
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 15px; /* Spacing between icon and text */
-  font-weight: 400; /* Lighter font weight */
-  padding: 12px 15px; /* Padding inside each menu item */
-  background: none !important;
+  gap: 12px;
+  font-weight: 600;
+  background: none !important; 
 }
-
-/* Hover and active effect */
 .sidebar-menu li:hover,
 .sidebar-menu li.active {
-  background-color: #a72d2d; /* Darker background for hover/active state */
+  background-color: #ce6363;
 }
 
-.sidebar-menu li.active a {
-  font-weight: 600; /* Bolder text for active link */
-}
 
 .sidebar-icon {
-  font-size: 20px; /* Adjusted icon size */
+  font-size: 18px;
   color: white;
 }
+
 
 /* Footer (Logout) */
 .sidebar-footer {
   margin-top: auto;
-  padding: 0 15px;
 }
 
 .logout-btn {
@@ -120,17 +115,17 @@
   background: none;
   border: none;
   color: white;
-  font-weight: 400; /* Lighter font weight to match menu items */
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 15px;
-  font-size: 16px;
+  gap: 12px;
+  font-size: 15px;
   cursor: pointer;
-  padding: 12px 15px;
+  padding: 14px 12px;
   border-radius: 8px;
   transition: 0.18s ease-in-out;
 }
 
 .logout-btn:hover {
-  background-color: #a72d2d;
+  background-color: #ce6363;
 }
