@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import 'assets/forgotpassword.css';
 import api from 'utils/api';
 import { useAlert } from 'context/AlertContext';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -12,11 +13,13 @@ function ForgotPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const { showAlert } = useAlert();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Try to prefill email if user is remembered somewhere (optional)
     const stored = localStorage.getItem('resetEmail');
     if (stored) setEmail(stored);
   }, []);
@@ -42,9 +45,12 @@ function ForgotPassword() {
 
   const handleResetPassword = async (e) => {
     e && e.preventDefault();
-    if (!code || !newPassword || !confirmPassword) return showAlert('All fields are required', 'error');
-    if (newPassword !== confirmPassword) return showAlert('Passwords do not match', 'error');
-    if (!/^\d+$/.test(code)) return showAlert('Code must be numeric', 'error');
+    if (!code || !newPassword || !confirmPassword)
+      return showAlert('All fields are required', 'error');
+    if (newPassword !== confirmPassword)
+      return showAlert('Passwords do not match', 'error');
+    if (!/^\d+$/.test(code))
+      return showAlert('Code must be numeric', 'error');
 
     setLoading(true);
     try {
@@ -68,88 +74,118 @@ function ForgotPassword() {
 
   return (
     <div className="forgot-wrapper">
-      <div className="forgot-left">
-        <div className="forgot-form-container">
-          <img
-            src={require('assets/logo.png')}
-            alt="BulSU Logo"
-            className="forgot-logo"
-          />
-          <h2 className="forgot-title">Forgot Password</h2>
-          <p className="forgot-subtitle">
-            {codeSent
-              ? 'Enter the code sent to your email and reset your password.'
-              : 'Enter your email to receive a code.'}
-          </p>
-
-          <form onSubmit={codeSent ? handleResetPassword : handleSendCode}>
-            <input
-              type="email"
-              name="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="forgot-input"
-              required
-              disabled={codeSent}
+      <div className="forgot-card">
+        {/* Left Side - Form */}
+        <div className="forgot-left">
+          <div className="forgot-form-container">
+            <img
+              src={require('assets/logo.png')}
+              alt="BulSU Logo"
+              className="forgot-logo"
             />
-
-            {codeSent && (
-              <>
-                <input
-                  type="text"
-                  name="code"
-                  placeholder="Enter code"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="forgot-input"
-                  required
-                />
-
-                <input
-                  type="password"
-                  name="newPassword"
-                  placeholder="New password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="forgot-input"
-                  required
-                />
-
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirm new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="forgot-input"
-                  required
-                />
-              </>
-            )}
-
-            <div className="button-group">
-              <button
-                type="submit"
-                className={codeSent ? 'forgot-button' : 'send-code-button'}
-                disabled={loading}
-              >
-                {loading ? 'Please wait...' : codeSent ? 'Reset Password' : 'Send Code'}
-              </button>
-            </div>
-
-            <p className="back-link">
-              <Link to="/login">← Back to Login</Link>
+            <h2 className="forgot-title">Forgot Password</h2>
+            <p className="forgot-subtitle">
+              {codeSent
+                ? 'Enter the code sent to your email and reset your password.'
+                : 'Enter your email to receive a code.'}
             </p>
-          </form>
-        </div>
-      </div>
 
-      <div className="forgot-right">
-        <div className="forgot-overlay">
-          <h3 className="forgot-banner-title">BULACAN STATE UNIVERSITY</h3>
-          <h4 className="forgot-banner-sub">PARKING MANAGEMENT SYSTEM</h4>
-          <p className="forgot-banner-tagline">Drive In. Park Smart. Move On.</p>
+            <form onSubmit={codeSent ? handleResetPassword : handleSendCode}>
+              <input
+                type="email"
+                name="email"
+                placeholder="Email address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="forgot-input"
+                required
+                disabled={codeSent}
+              />
+
+              {codeSent && (
+                <>
+                  <input
+                    type="text"
+                    name="code"
+                    placeholder="Enter code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    className="forgot-input"
+                    required
+                  />
+
+                  {/* Password input with toggle */}
+                  <div className="input-group">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      name="newPassword"
+                      placeholder="New password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="forgot-input"
+                      required
+                    />
+                    <span
+                      className="toggle-password"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+
+                  {/* Confirm password input with toggle */}
+                  <div className="input-group">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      name="confirmPassword"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="forgot-input"
+                      required
+                    />
+                    <span
+                      className="toggle-password"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                    >
+                      {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                    </span>
+                  </div>
+                </>
+              )}
+
+              <div className="button-group">
+                <button
+                  type="submit"
+                  className={codeSent ? 'forgot-button' : 'send-code-button'}
+                  disabled={loading}
+                >
+                  {loading
+                    ? 'Please wait...'
+                    : codeSent
+                    ? 'Reset Password'
+                    : 'Send Code'}
+                </button>
+              </div>
+
+              <p className="back-link">
+                <Link to="/login">← Back to Login</Link>
+              </p>
+            </form>
+          </div>
+        </div>
+
+        {/* Right Side - Banner */}
+        <div className="forgot-right">
+          <div className="forgot-overlay">
+            <h3 className="forgot-banner-title">BULACAN STATE UNIVERSITY</h3>
+            <h4 className="forgot-banner-sub">PARKING MANAGEMENT SYSTEM</h4>
+            <p className="forgot-banner-tagline">
+              Drive In. Park Smart. Move On.
+            </p>
+          </div>
         </div>
       </div>
     </div>
