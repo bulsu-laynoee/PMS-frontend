@@ -1,26 +1,23 @@
-/* Add this to your main app container (e.g., App.js or main layout) */
 .main-app-container {
   display: flex;
   min-height: 100vh;
   width: 100vw;
-  /* ensure content doesn't sit under fixed sidebar */
-  padding-left: 270px;
+  padding-left: 270px; /* Prevents content overlap */
 }
 
 .sidebar {
-  background-color: #a73737; /* maroon */
-  width: 270px;
+  background-color: #c04a4a; 
   min-width: 270px;
   height: 100vh;
   color: white;
-  padding: 18px;
   font-family: 'Poppins', sans-serif;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  justify-content: space-between; /* Keeps logout at bottom */
   position: fixed;
   left: 0;
   top: 0;
+  padding: 20px 15px;
   z-index: 1000;
 }
 
@@ -36,52 +33,57 @@
   }
 }
 
+/* Logo section */
 .sidebar-logo {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 28px;
   text-decoration: none;
   color: white;
+  margin-bottom: 30px;
 }
 
 .logo-image {
-  width: 72px;
-  height: 72px;
+  width: 130px;
+  height: 130px;
   object-fit: cover;
   border-radius: 50%;
+  margin-bottom: 8px;
 }
 
 .logo-title {
-  text-align: left;
-  line-height: 1.05;
+  text-align: center;
+  line-height: 1.3;
 }
+
 .logo-line1 {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.6px;
 }
+
 .logo-line2 {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 700;
-  opacity: 0.95;
+  
 }
 
+/* Menu */
 .sidebar-menu {
   list-style: none;
   padding: 0;
-  margin: 0 0 8px 0;
+  margin: 0;
+  flex-grow: 1;
 }
 
 .sidebar-menu li {
-  padding: 16px 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 13px;
   border-radius: 8px;
-  transition: 0.18s ease-in-out;
+  
 }
+
 .sidebar-menu li a {
   color: white;
   text-decoration: none;
@@ -89,20 +91,41 @@
   align-items: center;
   gap: 12px;
   font-weight: 600;
-}
-.sidebar-icon {
-  margin-right: 8px;
-  font-size: 18px;
+  background: none !important; 
 }
 .sidebar-menu li:hover,
 .sidebar-menu li.active {
-  background-color: #7f2d2d;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  background-color: #ce6363;
+}
+
+
+.sidebar-icon {
+  font-size: 18px;
+  color: white;
+}
+
+
+/* Footer (Logout) */
+.sidebar-footer {
+  margin-top: auto;
 }
 
 .logout-btn {
+  width: 100%;
+  background: none;
+  border: none;
   color: white;
   font-weight: 700;
-  padding: 12px 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 14px 12px;
   border-radius: 8px;
+  transition: 0.18s ease-in-out;
+}
+
+.logout-btn:hover {
+  background-color: #ce6363;
 }
