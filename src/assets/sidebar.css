@@ -1,26 +1,39 @@
+:root{
+  --sidebar-width: 270px;
+  --sidebar-bg: #c04a4a;
+  --sidebar-hover: #ce6363;
+  --active-bg: rgba(255,255,255,0.08);
+  --white: #ffffff;
+  --font: 'Poppins', sans-serif;
+}
+
+/* Layout */
 .main-app-container {
   display: flex;
   min-height: 100vh;
   width: 100vw;
-  padding-left: 270px; /* Prevents content overlap */
+  padding-left: var(--sidebar-width); /* Prevents content overlap */
 }
 
 .sidebar {
-  background-color: #992525;
-  min-width: 270px;
+  background-color: var(--sidebar-bg);
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
   height: 100vh;
-  color: white;
-  font-family: 'Poppins', sans-serif;
+  color: var(--white);
+  font-family: var(--font);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: space-between; /* Keeps logout at bottom */
   position: fixed;
   left: 0;
   top: 0;
-  padding: 20px; /* Slightly adjust overall padding */
+  padding: 28px 18px;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .sidebar {
     position: relative;
@@ -38,24 +51,33 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center; /* Center the title */
   text-decoration: none;
-  color: white;
-  margin-bottom: 50px; /* Adjust spacing */
+  color: var(--white);
+  margin-bottom: 34px;
 }
 
 .logo-image {
-  width: 100px; /* Adjust logo size */
-  height: 100px;
-  object-fit: contain; /* Use 'contain' to prevent distortion */
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  border: 3px solid rgba(255,255,255,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 .logo-title {
-  font-size: 14px; /* Adjust font size */
+  text-align: center;
+  line-height: 1;
+  user-select: none;
+}
+
+.logo-line1,
+.logo-line2 {
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.8px; /* Add some letter spacing */
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
 
 /* Menu */
@@ -64,58 +86,96 @@
   padding: 0;
   margin: 0;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .sidebar-menu li {
-  margin-bottom: 20px; /* Increase spacing between menu items */
-  cursor: pointer;
-  font-size: 15px;
+  width: 100%;
+  margin: 0;
   border-radius: 8px;
+  box-sizing: border-box;
 }
 
+/* Make Link take full width and align like the screenshot */
 .sidebar-menu li a {
-  color: white;
-  text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 15px; /* Adjust spacing between icon and text */
-  font-weight: 400; /* Lighter font weight */
-  background: none !important;
-  padding: 10px 15px; /* Add padding to the link for better hover area */
+  gap: 12px;
+  padding: 12px 14px;
+  width: 100%;
+  color: var(--white);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  border-radius: 8px;
+  transition: background 150ms ease, transform 150ms ease;
+  box-sizing: border-box;
 }
 
-.sidebar-menu li:hover,
-.sidebar-menu li.active {
-  background-color: rgba(255, 255, 255, 0.1); /* Lighter hover effect */
-}
-
+/* Icon sizing and alignment */
 .sidebar-icon {
-  font-size: 20px; /* Adjust icon size */
-  color: white;
+  font-size: 16px;
+  color: var(--white);
+  width: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Hover + active styles to match screenshot */
+.sidebar-menu li:hover a {
+  background-color: var(--sidebar-hover);
+}
+
+.sidebar-menu li.active a {
+  background-color: var(--active-bg);
+  color: var(--white);
+  box-shadow: inset 4px 0 0 rgba(255,255,255,0.06);
+}
+
+/* Make the active text slightly bolder */
+.sidebar-menu li.active a {
+  font-weight: 800;
 }
 
 /* Footer (Logout) */
 .sidebar-footer {
   margin-top: auto;
-  padding-top: 20px; /* Add some space above the button */
+  padding-top: 10px;
 }
 
 .logout-btn {
   width: 100%;
   background: none;
   border: none;
-  color: white;
-  font-weight: 400; /* Lighter font weight */
+  color: var(--white);
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 15px;
-  font-size: 15px;
+  gap: 12px;
+  font-size: 13px;
   cursor: pointer;
-  padding: 10px 15px;
+  padding: 12px 14px;
   border-radius: 8px;
-  transition: 0.18s ease-in-out;
+  transition: background 150ms ease;
+  box-sizing: border-box;
 }
 
 .logout-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Lighter hover effect */
+  background-color: var(--sidebar-hover);
+}
+
+/* small spacing under logout on very tall screens */
+@media (min-height: 900px) {
+  .sidebar-footer { padding-bottom: 12px; }
+}
+
+/* small screens: slightly smaller paddings */
+@media (max-width: 420px) {
+  .logo-image { width: 64px; height: 64px; }
+  .logo-line1, .logo-line2 { font-size: 12px; }
+  .sidebar-menu li a, .logout-btn { padding: 10px 12px; font-size: 12px; }
 }
