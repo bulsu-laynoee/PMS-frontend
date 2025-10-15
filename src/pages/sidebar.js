@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaTachometerAlt,
   FaCar,
@@ -11,7 +11,6 @@ import {
 } from 'react-icons/fa';
 import 'assets/sidebar.css';
 import { logout } from '../utils/auth';
-// ...existing code...
 
 const Sidebar = () => {
   const location = useLocation();
@@ -22,62 +21,58 @@ const Sidebar = () => {
     location.pathname.startsWith(path + '/') ||
     location.pathname === path.replace('/home', '');
 
-  const handleNav = (e, path) => {
-    e.preventDefault();
-    navigate(path);
-  };
-
   return (
     <div className="sidebar">
       {/* Centered logo + title */}
       <div className="sidebar-logo">
         <img
           src={require('assets/logo.png')}
-          alt="Bulacan State University Logo"
+          alt="Logo"
           className="logo-image"
         />
-        <h1 className="logo-title">
-          PARKING MANAGEMENT SYSTEM
-        </h1>
+        <div className="logo-title">
+          <div className="logo-line1">PARKING MANAGEMENT</div>
+          <div className="logo-line2">SYSTEM</div>
+        </div>
       </div>
 
       {/* Menu items */}
       <ul className="sidebar-menu">
         <li className={isActive('/home/dashboard') ? 'active' : ''}>
-          <a href="/home/dashboard" onClick={(e) => handleNav(e, '/home/dashboard')}>
+          <Link to="/home/dashboard">
             <FaTachometerAlt className="sidebar-icon" />
             DASHBOARD
-          </a>
+          </Link>
         </li>
         <li className={isActive('/home/parkingspaces') ? 'active' : ''}>
-          <a href="/home/parkingspaces" onClick={(e) => handleNav(e, '/home/parkingspaces')}>
+          <Link to="/home/parkingspaces">
             <FaCar className="sidebar-icon" />
             PARKING SPACES
-          </a>
+          </Link>
         </li>
         <li className={isActive('/home/userlist') ? 'active' : ''}>
-          <a href="/home/userlist" onClick={(e) => handleNav(e, '/home/userlist')}>
+          <Link to="/home/userlist">
             <FaUsers className="sidebar-icon" />
             USER LIST
-          </a>
+          </Link>
         </li>
-        <li className={isActive('/home/messages') ? 'active' : ''}>
-          <a href="/home/messages" onClick={(e) => handleNav(e, '/home/messages')}>
+         <li className={isActive('/home/messages') ? 'active' : ''}>
+          <Link to="/home/messages">
             <FaEnvelope className="sidebar-icon" />
             MESSAGES
-          </a>
-        </li>
+          </Link>
+        </li>       
         <li className={isActive('/home/incidents') ? 'active' : ''}>
-          <a href="/home/incidents" onClick={(e) => handleNav(e, '/home/incidents')}>
+          <Link to="/home/incidents">
             <FaExclamationTriangle className="sidebar-icon" />
             INCIDENTS REPORT
-          </a>
+          </Link>
         </li>
         <li className={isActive('/home/settings') ? 'active' : ''}>
-          <a href="/home/settings" onClick={(e) => handleNav(e, '/home/settings')}>
+          <Link to="/home/settings">
             <FaCog className="sidebar-icon" />
             SETTINGS
-          </a>
+          </Link>
         </li>
       </ul>
 
