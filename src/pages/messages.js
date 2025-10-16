@@ -186,12 +186,14 @@ export default function Messages() {
   return (
     <div style={{
       display: 'flex',
-      height: '85vh',
+      height: '98vh',
+      marginTop: '5px',
       borderRadius: '12px',
       overflow: 'hidden',
       backgroundColor: '#fff',
       boxShadow: '0 6px 24px rgba(0,0,0,0.08)',
-      fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial'
+      fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+      marginLeft: '10px'
     }}>
       {/* Sidebar */}
       <div style={{

@@ -103,7 +103,7 @@ const UserList = () => {
         <Heading size="lg">User List</Heading>
         <HStack>
           <Button leftIcon={<FiPlus />} colorScheme="red" onClick={() => setModalOpen(true)}>Create User</Button>
-          <Button variant="outline" onClick={() => navigate('/pendinglist')}>Pending</Button>
+          <Button variant="outline" onClick={() => navigate('/home/pendinglist')}>Pending</Button>
         </HStack>
       </HStack>
 

@@ -5,7 +5,6 @@ import {
   FaUsers,
   FaClock,
   FaEnvelope,
-  FaCog,
   FaBell,
   FaExclamationTriangle,
 } from 'react-icons/fa';
@@ -67,10 +66,6 @@ const Dashboard = () => {
           <h3>Messages</h3>
         </div>
 
-        <div className="card" onClick={() => navigate('/home/settings')}>
-          <FaCog className="card-icon" />
-          <h3>Settings</h3>
-        </div>
       </div>
     </div>
   );

@@ -169,7 +169,7 @@ const IncidentManagement = () => {
   }
 
   return (
-    <div className="incident-management p-6">
+    <div className="incident-management p-6" style={{ marginLeft: 20 }}>
       {unauthenticated && (
         <div className="mb-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
           <div className="flex items-center justify-between">

@@ -25,7 +25,7 @@ function ForgotPassword() {
   }, []);
 
   const handleSendCode = async (e) => {
-    e && e.preventDefault();
+    e.preventDefault();
     if (!email.trim()) return showAlert('Please enter your email', 'error');
 
     setLoading(true);
@@ -44,7 +44,7 @@ function ForgotPassword() {
   };
 
   const handleResetPassword = async (e) => {
-    e && e.preventDefault();
+    e.preventDefault();
     if (!code || !newPassword || !confirmPassword)
       return showAlert('All fields are required', 'error');
     if (newPassword !== confirmPassword)
@@ -75,7 +75,7 @@ function ForgotPassword() {
   return (
     <div className="forgot-wrapper">
       <div className="forgot-card">
-        {/* Left Side - Form */}
+        {/* LEFT SIDE */}
         <div className="forgot-left">
           <div className="forgot-form-container">
             <img
@@ -83,6 +83,7 @@ function ForgotPassword() {
               alt="BulSU Logo"
               className="forgot-logo"
             />
+
             <h2 className="forgot-title">Forgot Password</h2>
             <p className="forgot-subtitle">
               {codeSent
@@ -90,10 +91,13 @@ function ForgotPassword() {
                 : 'Enter your email to receive a code.'}
             </p>
 
-            <form onSubmit={codeSent ? handleResetPassword : handleSendCode}>
+            <form
+              onSubmit={codeSent ? handleResetPassword : handleSendCode}
+              className="forgot-form"
+            >
+              {/* Email Input */}
               <input
                 type="email"
-                name="email"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -102,11 +106,11 @@ function ForgotPassword() {
                 disabled={codeSent}
               />
 
+              {/* If code sent, show reset fields */}
               {codeSent && (
                 <>
                   <input
                     type="text"
-                    name="code"
                     placeholder="Enter code"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
@@ -114,11 +118,10 @@ function ForgotPassword() {
                     required
                   />
 
-                  {/* Password input with toggle */}
+                  {/* New Password Input */}
                   <div className="input-group">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
-                      name="newPassword"
                       placeholder="New password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -133,11 +136,10 @@ function ForgotPassword() {
                     </span>
                   </div>
 
-                  {/* Confirm password input with toggle */}
+                  {/* Confirm Password Input */}
                   <div className="input-group">
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
                       placeholder="Confirm new password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -156,10 +158,11 @@ function ForgotPassword() {
                 </>
               )}
 
+              {/* Submit Button */}
               <div className="button-group">
                 <button
                   type="submit"
-                  className={codeSent ? 'forgot-button' : 'send-code-button'}
+                  className="forgot-button"
                   disabled={loading}
                 >
                   {loading
@@ -177,7 +180,7 @@ function ForgotPassword() {
           </div>
         </div>
 
-        {/* Right Side - Banner */}
+        {/* RIGHT SIDE */}
         <div className="forgot-right">
           <div className="forgot-overlay">
             <h3 className="forgot-banner-title">BULACAN STATE UNIVERSITY</h3>

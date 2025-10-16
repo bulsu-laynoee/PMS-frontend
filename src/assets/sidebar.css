@@ -2,12 +2,14 @@
   display: flex;
   min-height: 100vh;
   width: 100vw;
-  padding-left: 270px; /* Prevents content overlap */
+  padding-left: 250px; /* Prevent overlap */
+  background-color: #f5f5f5;
 }
 
+/* Sidebar */
 .sidebar {
-  background-color: #992525;
-  min-width: 270px;
+  background-color: #cdbdbd;
+  min-width: 250px;
   height: 100vh;
   color: white;
   font-family: 'Poppins', sans-serif;
@@ -17,10 +19,12 @@
   position: fixed;
   left: 0;
   top: 0;
-  padding: 20px; /* Slightly adjust overall padding */
+  padding: 18px 16px;
   z-index: 1000;
+  overflow: hidden;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .sidebar {
     position: relative;
@@ -28,94 +32,109 @@
     width: 100%;
     min-width: 0;
   }
+
   .main-app-container {
     padding-left: 0;
   }
 }
 
-/* Logo section */
+/* Logo */
 .sidebar-logo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center; /* Center the title */
-  text-decoration: none;
+  text-align: center;
   color: white;
-  margin-bottom: 35px; /* Adjust spacing */
 }
 
 .logo-image {
-  width: 130px; /* Adjust logo size */
-  height: 130px;
-  object-fit: cover; /* Use 'contain' to prevent distortion */
+  width: 145px;
+  height: 145px;
+  object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 12px;
 }
 
 .logo-title {
-  font-size: 16px; /* Adjust font size */
-  font-weight: 800;
-  letter-spacing: 0.8px; /* Add some letter spacing */
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
 }
 
 /* Menu */
 .sidebar-menu {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
   flex-grow: 1;
 }
 
-.sidebar-menu li {
-  margin-bottom: 20px; /* Increase spacing between menu items */
-  cursor: pointer;
-  font-size: 15px;
-  border-radius: 8px;
-}
-
-.sidebar-menu li a {
+.sidebar-menu a {
   color: white;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 15px; /* Adjust spacing between icon and text */
-  font-weight: 400; /* Lighter font weight */
-  background: none !important;
-  padding: 10px 15px; /* Add padding to the link for better hover area */
+  gap: 8px;
+  font-weight: 550;
+  font-size: 14px;
+  padding: 12px 12px;
+  border-radius: 10px;
+  transition: all 0.2s ease-in-out;
+  transform-origin: left right;
+  margin-bottom: 5px;
 }
 
-.sidebar-menu li:hover,
-.sidebar-menu li.active {
-  background-color: rgba(255, 255, 255, 0.1); /* Lighter hover effect */
+/* Hover & Active */
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  transform: scale(1.1);
+  font-weight: 700;
 }
 
+/* Icon */
 .sidebar-icon {
-  font-size: 20px; /* Adjust icon size */
+  font-size: 16px;
   color: white;
 }
 
-/* Footer (Logout) */
+/* Footer */
 .sidebar-footer {
-  margin-top: auto;
-  padding-top: 20px; /* Add some space above the button */
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* Logout Button */
 .logout-btn {
   width: 100%;
   background: none;
   border: none;
   color: white;
-  font-weight: 400; /* Lighter font weight */
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 15px;
-  font-size: 15px;
+  gap: 8px;
+  font-size: 14px;
   cursor: pointer;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 8px;
-  transition: 0.18s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  transform-origin: left right;
+  margin-bottom: 10px;
 }
 
 .logout-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1); /* Lighter hover effect */
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  transform: scale(1.05);
+  font-weight: 700;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 30px;
 }
