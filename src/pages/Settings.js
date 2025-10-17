@@ -201,7 +201,7 @@ const Settings = () => {
       showAlert(res.data.message || "Password reset successfully!", 'success');
       localStorage.removeItem("token");
       sessionStorage.clear();
-      setTimeout(() => (window.location.href = "/sign-in"), 2000);
+      setTimeout(() => (window.location.href = "/login"), 2000);
     } catch (err) {
       showAlert(err.response?.data?.message || "Failed to reset password", 'error');
     } finally {
