@@ -6,7 +6,6 @@
   "env": {
     "REACT_APP_API_URL": "https://bulsupms.com/api"
   },
-  "functions": {},
   "rewrites": [
     {
       "source": "/(.*)",
