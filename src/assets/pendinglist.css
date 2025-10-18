@@ -1,6 +1,8 @@
+/* --- Main Container --- */
 .pendinglist-container {
-  padding: 40px 60px;
-  background-color: #fff;
+  padding: 30px 40px;
+  /* Light gray background from your dashboard */
+  background-color: #f8f9fa;
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
@@ -13,85 +15,192 @@
   align-items: center;
   margin-bottom: 25px;
   flex-wrap: wrap;
-  row-gap: 15px;
+  row-gap: 20px;
 }
 
 .pendinglist-header h2 {
+  /* Main red color from your sidebar */
   color: #a73737;
   font-size: 32px;
   margin: 0;
+  font-weight: 700;
 }
 
+/* --- Role Buttons (New Card Style) --- */
 .role-buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.role-buttons button {
-  background-color: white;
-  border: 2px solid #cc4444;
-  color: #cc4444;
-  font-weight: 500;
-  padding: 8px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: 0.2s ease-in-out;
-}
-
-.role-buttons button:hover,
-.role-buttons button.active {
-  background-color: #cc4444;
-  color: white;
-  font-weight: bold;
-}
-
-/* Add & Pending Buttons */
-.role-buttons .add {
-  background-color: #cc4444;
-  border: 2px solid #cc4444;
-  color: white;
-  font-weight: bold;
-}
-
-.role-buttons .pending {
-  background-color: #f5c542;
-  border: 2px solid #f5c542;
-  color: #333;
-  font-weight: bold;
-}
-
-/* --- Actions Row --- */
-.pendinglist-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
   flex-wrap: wrap;
   gap: 16px;
 }
 
+.role-buttons button {
+  /* Styled like your white dashboard cards */
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #333;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px; /* Give them a uniform size */
+}
+
+.role-buttons button:hover {
+  border-color: #c0c0c0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.role-buttons button.active {
+  /* Matches your active sidebar link */
+  background: linear-gradient(90deg, #8f2b2b, #cf3636);
+  color: #fff;
+  border-color: #a73737;
+  /* Add a "glow" like the active state */
+  box-shadow: 0 4px 15px rgba(167, 55, 55, 0.3);
+}
+
+/* Styling for the new icon and text spans */
+.role-icon {
+  font-size: 28px;
+  /* Icon color from your dashboard cards */
+  color: #a73737;
+  transition: color 0.2s ease;
+  padding: 8px;
+  background-color: #fdf7f7;
+  border-radius: 8px;
+}
+
+.role-buttons button.active .role-icon {
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+.role-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.role-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.role-count {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+/* --- Actions Row (Search/Sort) --- */
+.pendinglist-actions {
+  display: flex;
+  justify-content: space-between; /* CHANGED: Was flex-end */
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* NEW: Styles for the left-side actions (User List button) */
+.left-actions {
+  display: flex;
+}
+
+.nav-button {
+  background: #a73737;
+  color: #fff;
+  border: 2px solid #a73737;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between icon and text */
+}
+
+.nav-button:hover {
+  background: #8e2d2d; /* Darker red */
+  border-color: #8e2d2d;
+  box-shadow: 0 2px 8px rgba(167, 55, 55, 0.2);
+}
+/* END NEW STYLES */
+
+/* --- ENHANCED Search & Sort --- */
 .right-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 16px; /* Increased gap */
 }
 
+/* Base styles for both elements */
 .right-actions input,
 .right-actions select {
   padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
+  border: 1px solid #e0e0e0; /* Match card border */
+  border-radius: 10px; /* Match card border-radius */
   font-size: 14px;
+  font-weight: 500; /* Slightly bolder text */
   min-width: 180px;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out; /* Smooth transition */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-repeat: no-repeat;
+  box-sizing: border-box;
 }
 
-/* --- Table --- */
+/* Specific styles for Search Bar */
+.right-actions input {
+  /* Encoded SVG for search icon */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+  background-size: 15px;
+  background-position: left 14px center;
+  padding-left: 40px; /* Space for icon */
+}
+
+/* Specific styles for Select Dropdown */
+.right-actions select {
+  /* Encoded SVG for chevron icon */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236c757d' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-size: 12px;
+  padding-right: 40px; /* Space for icon */
+}
+
+.right-actions input:hover,
+.right-actions select:hover {
+  border-color: #c0c0c0; /* Subtle hover */
+  background-color: #fdfdfd;
+}
+
+/* Focus state matches your theme (unchanged) */
+.right-actions input:focus,
+.right-actions select:focus {
+  outline: none;
+  border-color: #a73737;
+  box-shadow: 0 0 0 3px rgba(167, 55, 55, 0.15);
+}
+/* --- END ENHANCED Search & Sort --- */
+
+
+/* --- Table Styling --- */
 .pendinglist-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #f9f9f9;
+  /* Styled like a white dashboard card */
+  background-color: #ffffff;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
@@ -99,35 +208,50 @@
 
 .pendinglist-table th,
 .pendinglist-table td {
-  padding: 16px 24px;
-  border-bottom: 1px solid #ddd;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f0f0f0; /* Lighter border */
   font-size: 15px;
+  color: #212529;
+  text-align: center; /* <<< CHANGED: Text is now centered */
 }
 
 .pendinglist-table th {
-  background-color: #f0f0f0;
+  background-color: #fcfcfc;
   font-weight: 600;
-  color: #333;
-  text-align: left;
+  color: #555;
+  /* text-align: left; <-- REMOVED this line */
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+/* Hover effect like your message list */
 .pendinglist-table tr:hover {
-  background-color: #f5f5f5;
+  background-color: #fdf7f7;
+}
+
+/* Last row shouldn't have a border */
+.pendinglist-table tr:last-child td {
+  border-bottom: none;
 }
 
 .pdf-link {
-  display: flex;
+  display: inline-flex; /* <<< THIS IS THE FIX (changed from 'flex') */
   align-items: center;
-  color: #d9534f;
+  justify-content: center; 
+  /* Use theme red */
+  color: #a73737;
   font-weight: 500;
   text-decoration: none;
-  gap: 5px;
+  gap: 6px;
+  cursor: pointer;
 }
 
 .pdf-link:hover {
   text-decoration: underline;
 }
 
+/* --- Action Icons --- */
 .action-icons {
   display: flex;
   gap: 10px;
@@ -138,16 +262,328 @@
   border: none;
   background-color: transparent;
   cursor: pointer;
-  font-size: 16px;
-  padding: 5px;
+  font-size: 18px; /* Slightly larger icon */
+  padding: 8px; /* Bigger click target */
   border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
 }
 
 .action-icons .approve {
   color: #28a745;
 }
+.action-icons .approve:hover {
+  background-color: #e6f7eb; /* Light green */
+}
 
 .action-icons .reject {
   color: #dc3545;
 }
+.action-icons .reject:hover {
+  background-color: #fdeeee; /* Light red */
+}
 
+/* --- Modal Styles (Enhanced) --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5); /* Darker, more standard overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  box-sizing: border-box; /* Added for consistency */
+  
+  /* NEW: Fade-in animation for the overlay */
+  animation: modal-overlay-fade-in 0.2s ease-out;
+}
+
+/* NEW: Base class for modal content */
+.modal-content-base {
+  background: #fff;
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  box-sizing: border-box;
+  animation: modal-content-fade-in 0.25s ease-out;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content {
+  max-width: 600px;
+  max-height: 90vh; /* Prevent modal from going off-screen */
+}
+
+/* NEW: Keyframe for the overlay */
+@keyframes modal-overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* UPDATED: Keyframe for the content slide-down */
+@keyframes modal-content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  background: #fdf7f7; /* Light red from hover */
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #a73737; /* Theme red */
+  font-size: 22px;
+  font-weight: 700; /* Bolder for more emphasis */
+}
+
+.modal-body {
+  padding: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two-column layout */
+  gap: 20px 24px;
+  
+  /* NEW: Allow body to scroll independently */
+  overflow-y: auto;
+  flex-grow: 1; /* Allow body to take available space */
+}
+
+.info-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-group label {
+  /* UPDATED: Lighter and smaller for better hierarchy */
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d; /* Softer muted text */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-group p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500; /* Slightly bolder data */
+  color: #212529;
+  
+  /* NEW: Prevent long text from overflowing */
+  word-break: break-word;
+}
+
+/* Make Email and Department full-width */
+.info-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.modal-files {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+/* NEW: Base class for modal footers */
+.modal-footer-base {
+  padding: 16px 24px;
+  background: #f8f9fa; /* Light gray footer */
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0; /* Prevent footer from shrinking */
+}
+
+/* --- CONSOLIDATED BUTTON STYLES --- */
+
+/* NEW: Base class for ALL modal buttons */
+.modal-button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* For icons in buttons */
+  transform: translateY(0);
+}
+
+.modal-button-primary {
+  background: #a73737;
+  color: white;
+  border: 2px solid #a73737;
+}
+
+.modal-button-primary:hover {
+  background: #8e2d2d;
+  border-color: #8e2d2d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(167, 55, 55, 0.2);
+}
+
+.modal-button-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(167, 55, 55, 0.2);
+}
+
+.modal-button-secondary {
+  background: #fff;
+  color: #555;
+  border: 2px solid #ddd;
+}
+
+.modal-button-secondary:hover {
+  border-color: #bbb;
+  background: #f9f9f9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.modal-button-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.modal-button-danger {
+  background: #dc3545;
+  color: white;
+  border: 2px solid #dc3545;
+}
+
+.modal-button-danger:hover {
+  background: #c82333;
+  border-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+.modal-button-danger:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.2);
+}
+
+.modal-button-success {
+  background: #28a745;
+  color: white;
+  border: 2px solid #28a745;
+}
+
+.modal-button-success:hover {
+  background: #218838;
+  border-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+}
+
+.modal-button-success:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.2);
+}
+/* --- END CONSOLIDATED BUTTONS --- */
+
+
+/* --- Confirmation Modal Styles --- */
+/* (This block is now much smaller) */
+
+.confirm-modal-content {
+  max-width: 450px; /* Smaller width for confirmation */
+}
+
+.confirm-modal-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff; /* Neutral header */
+}
+
+/* Specific header colors */
+.confirm-modal-content.danger .confirm-modal-header h3 {
+  color: #dc3545; /* Red for danger */
+}
+.confirm-modal-content.success .confirm-modal-header h3 {
+  color: #28a745; /* Green for success */
+}
+
+.confirm-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.confirm-modal-body {
+  padding: 24px;
+  line-height: 1.6;
+  font-size: 16px;
+  color: #333;
+}
+
+.confirm-modal-body p {
+  margin: 0 0 10px 0;
+}
+.confirm-modal-body p:last-child {
+  margin-bottom: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+.confirm-modal-footer {
+  gap: 12px; /* Add gap between buttons */
+}
+/* --- NEW: Styles for left header & breadcrumbs --- */
+.header-left-side {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Space between title and breadcrumbs */
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.breadcrumbs a {
+  color: #6c757d; /* Muted gray */
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breadcrumbs a:hover {
+  color: #a73737; /* Theme red on hover */
+  text-decoration: underline;
+}
+
+.breadcrumbs span {
+  color: #b0b0b0; /* Light gray for the slash */
+}
+
+.breadcrumbs .breadcrumb-active {
+  color: #212529; /* Dark text for active page */
+  font-weight: 600;
+}
+/* --- END NEW STYLES --- */

@@ -8,7 +8,8 @@ import {
   FaBell,
   FaExclamationTriangle,
   FaArrowRight,
-  FaCar
+  FaCar,
+  FaFeedback
 } from 'react-icons/fa';
 import { getUserName, getToken } from '../utils/auth';
 import api from '../utils/api';
@@ -140,7 +141,7 @@ const Dashboard = () => {
           <DashboardCard
             onClick={() => navigate('/home/incidents')}
             icon={<FaExclamationTriangle className="card-icon" />}
-            title="Incident Reports"
+            title="Incidents Report"
             description="Address and resolve reported incidents."
           />
           <DashboardCard

@@ -90,6 +90,7 @@ export default function Messages() {
     }
   };
 
+  // ======= THIS IS THE UPDATED FUNCTION =======
   // Open conversation and subscribe
   const openConversation = async (conv) => {
     try {
@@ -99,33 +100,100 @@ export default function Messages() {
       const msgs = payload.messages?.data || payload.messages || [];
       setActiveConv({ ...fetchedConv, messages: msgs });
 
-      // manage echo subscription
+      // --- START: MODIFIED ECHO LOGIC ---
+
+      // First, clean up any previous subscription
       if (echoSubscription.current) {
         try { echoSubscription.current.stopListening('MessageSent'); } catch {}
         try { window.Echo.leave(`private:conversation.${echoSubscription.currentConvId}`); } catch {}
       }
+
+      // Then, set up the new subscription
       if (window.Echo && typeof window.Echo.private === 'function') {
-        echoSubscription.current = window.Echo.private(`conversation.${fetchedConv.id}`);
-        echoSubscription.currentConvId = fetchedConv.id;
-        echoSubscription.current.listen('MessageSent', (e) => {
-          setActiveConv(prev => ({ ...prev, messages: [...(prev.messages || []), e.message] }));
+        const conversationId = fetchedConv.id; // Capture the ID for use in the listener
+        const channel = window.Echo.private(`conversation.${conversationId}`);
+        
+        echoSubscription.current = channel; // Store the channel reference
+        echoSubscription.currentConvId = conversationId; // Store the ID for cleanup
+
+        channel.listen('MessageSent', (e) => {
+          const newMessage = e.message;
+
+          // 1. Update the main conversation list (for the sidebar)
+          setConversations(prevConvs =>
+            prevConvs.map(c => {
+              if (c.id === conversationId) {
+                // Increment message count and update timestamp
+                return { 
+                    ...c, 
+                    last_message_at: new Date(newMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                    messages_count: (c.messages_count || 0) + 1 
+                };
+              }
+              return c;
+            })
+          );
+
+          // 2. Update the active conversation window's messages
+          setActiveConv(prevActiveConv => {
+            // CRITICAL CHECK: Only update if the message is for the currently active conversation
+            if (prevActiveConv && prevActiveConv.id === conversationId) {
+              // Prevent adding duplicate messages
+              if (prevActiveConv.messages.some(msg => msg.id === newMessage.id)) {
+                return prevActiveConv;
+              }
+              // Add the new message
+              return {
+                ...prevActiveConv,
+                messages: [...prevActiveConv.messages, newMessage]
+              };
+            }
+            // If not the active conversation, don't change the window
+            return prevActiveConv;
+          });
         });
       }
+      // --- END: MODIFIED ECHO LOGIC ---
+
     } catch (e) {
       console.error('Failed to open conversation', e);
     }
   };
+  // ============================================
 
   const sendMessage = async () => {
     if (!activeConv || !messageText.trim()) return;
+
+    const textToSend = messageText; // Store the message text
+    setMessageText(''); // Clear the input immediately for a responsive feel
+
     try {
-      await api.post(`/conversations/${activeConv.id}/message`, { body: messageText });
-      setMessageText('');
+      // 1. Wait for the API response
+      const res = await api.post(`/conversations/${activeConv.id}/message`, { body: textToSend });
+      
+      // 2. Get the new message object from the response
+      //    (Adjust 'res.data.message' if your API returns it differently)
+      const newMessage = res.data.message || res.data.data || res.data;
+
+      // 3. Add the new message to your active conversation's state
+      //    This makes YOUR sent message appear instantly
+      if (newMessage && newMessage.id) {
+        setActiveConv(prev => ({
+          ...prev,
+          messages: [...(prev.messages || []), newMessage]
+        }));
+      }
+
+      // 4. Refresh the conversation list (which you already do)
       loadConversations();
+
     } catch (e) {
       console.error('Failed to send message', e);
+      // If it fails, put the message back in the input box
+      setMessageText(textToSend);
     }
   };
+
 
   useEffect(() => {
     loadCurrentUser();
@@ -243,80 +311,80 @@ return (
         flexDirection: 'column',
         borderRight: '1px solid #e2e8f0'
       }}>
-         <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(100deg, #8f2b2b, #ec4545)',
-            color: 'white',
-            padding: '20px',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
-         }}>
-           <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
-            <MessageSquareText style={{width: 28, height: 28}} />
-            <h3 style={{fontSize: '20px', fontWeight: 700, letterSpacing: '0.05em'}}>Conversations</h3>
-           </div>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'linear-gradient(100deg, #8f2b2b, #ec4545)',
+          color: 'white',
+          padding: '20px',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+        }}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+          <MessageSquareText style={{width: 28, height: 28}} />
+          <h3 style={{fontSize: '20px', fontWeight: 700, letterSpacing: '0.05em'}}>Conversations</h3>
+          </div>
         </div>
 
-         {/* --- Card-Based Design --- */}
+        {/* --- Card-Based Design --- */}
         <div style={{padding: '16px', flex: '1', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
-            {/* Search Bar */}
-            <div style={{ position: 'relative', marginBottom: '16px' }}>
-                <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name..."
-                style={{
-                    width: '100%', padding: '10px 12px', borderRadius: '8px',
-                    border: 'none', outline: 'none', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '14px',
-                }}
-                />
-            </div>
-            {/* Conversation List */}
-            <div style={{ color: '#000', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {conversations.length > 0 ? (
-                    conversations.map(c => {
-                        const isActive = activeConv?.id === c.id;
-                        const displayName = getDisplayNameForConversation(c);
-                        return (
-                            <div key={c.id} onClick={() => openConversation(c)}
-                                style={{
-                                    backgroundColor: isActive ? '#9b3e3e' : '#fff',
-                                    color: isActive ? '#fff' : '#334155',
-                                    borderRadius: '10px',
-                                    cursor: 'pointer',
-                                    transition: 'transform 0.15s ease, box-shadow 0.2s ease',
-                                    boxShadow: isActive ? '0 4px 12px rgba(155, 62, 62, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '12px',
-                                    padding: '12px'
-                                }}>
-                                <UserAvatar name={displayName} />
-                                <div style={{flex: 1, minWidth: 0}}>
-                                    <div style={{ fontSize: '15px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
-                                    <div style={{ fontSize: '12px', color: isActive ? '#fecaca' : '#64748b' }}>
-                                        {c.messages_count ?? 0} messages
-                                    </div>
-                                </div>
-                                <div style={{fontSize: '11px', color: isActive ? '#fecaca' : '#94a3b8', marginLeft: 'auto', flexShrink: 0}}>{c.last_message_at || ''}</div>
-                            </div>
-                        );
-                    })
-                ) : (
-                    <div style={{textAlign: 'center', color: '#64748b', marginTop: '40px'}}>
-                        No conversations found.
-                    </div>
-                )}
-            </div>
+          {/* Search Bar */}
+          <div style={{ position: 'relative', marginBottom: '16px' }}>
+              <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name..."
+              style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px',
+                  border: 'none', outline: 'none', backgroundColor: '#f1f5f9', color: '#475569', fontSize: '14px',
+              }}
+              />
+          </div>
+          {/* Conversation List */}
+          <div style={{ color: '#000', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {conversations.length > 0 ? (
+                  conversations.map(c => {
+                      const isActive = activeConv?.id === c.id;
+                      const displayName = getDisplayNameForConversation(c);
+                      return (
+                          <div key={c.id} onClick={() => openConversation(c)}
+                              style={{
+                                  backgroundColor: isActive ? '#cc4d17ff' : '#fff',
+                                  color: isActive ? '#fff' : '#334155',
+                                  borderRadius: '10px',
+                                  cursor: 'pointer',
+                                  transition: 'transform 0.15s ease, box-shadow 0.5s ease',
+                                  boxShadow: isActive ? '0 4px 12px rgba(155, 62, 62, 0.3)' : '0 1px 3px rgba(0,0,0,0.05)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '12px',
+                                  padding: '12px'
+                              }}>
+                              <UserAvatar name={displayName} />
+                              <div style={{flex: 1, minWidth: 0}}>
+                                  <div style={{ fontSize: '15px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
+                                  <div style={{ fontSize: '12px', color: isActive ? '#fecaca' : '#64748b' }}>
+                                      {c.messages_count ?? 0} messages
+                                  </div>
+                              </div>
+                              <div style={{fontSize: '11px', color: isActive ? '#fecaca' : '#94a3b8', marginLeft: 'auto', flexShrink: 0}}>{c.last_message_at || ''}</div>
+                          </div>
+                      );
+                  })
+              ) : (
+                  <div style={{textAlign: 'center', color: '#64748b', marginTop: '40px'}}>
+                      No conversations found.
+                  </div>
+              )}
+          </div>
         </div>
 
       </div>
       {/* Chat area */}
-       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff' }}>
         {!activeConv ? (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#777', flexDirection: 'column', gap: '10px' }}>
-             <MessageSquareText style={{width: 50, height: 50, color: '#cbd5e1'}}/>
+            <MessageSquareText style={{width: 50, height: 50, color: '#cbd5e1'}}/>
             Select a conversation to view messages
           </div>
         ) : (
@@ -340,7 +408,7 @@ return (
 
                 return (
                   <div key={m.id ?? idx} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
-                     <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4, color: '#64748b', padding: '0 8px' }}>
+                      <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4, color: '#64748b', padding: '0 8px' }}>
                         {pickParticipantName(sender) || 'System'} • {m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
                       </div>
                     <div style={{ ...bubbleBaseStyle, ...(isOwn ? ownMessageBubble : otherMessageBubble) }}>
@@ -355,7 +423,7 @@ return (
             <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} style={{ display: 'flex', padding: '12px 20px', background: '#fff', borderTop: '1px solid #f1f5f9', gap: '12px', alignItems: 'center' }}>
               <input
                 value={messageText}
-                onChange={(e) => setMessageText(e.target.value)}
+                onChange={(e) => setMessageText(e.gexitt.value)}
                 placeholder="Type a message..."
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 style={{ flex: 1, fontSize: 15, padding: '12px 16px', borderRadius: '9999px', border: 'none', backgroundColor: '#f1f5f9', outline: 'none' }}
