@@ -26,7 +26,10 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
     }
   };
 
-  useEffect(() => { if (user) load(); }, [user, load]);
+  // Load vehicles when the modal receives a user. `load` is stable here
+  // and should not be included in the dependency array to avoid
+  // re-running on every render (which caused repeated requests).
+  useEffect(() => { if (user) load(); }, [user]);
 
   const handleSuccess = () => {
     setEditing(null);
