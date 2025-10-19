@@ -27,7 +27,11 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/login', values);
+      // For the admin web interface send an `admin` flag so the backend
+      // can enforce admin-only access (role id = 6). This ensures non-admin
+      // accounts attempting to use this UI receive a friendly 403 response.
+      const payload = { ...values, admin: true };
+      const response = await api.post('/login', payload);
       const token = response.data?.data?.token;
       const name = response.data?.data?.name;
       const email = response.data?.data?.email;
@@ -41,13 +45,17 @@ function Login() {
         showAlert('Login failed: Invalid credentials', 'error');
       }
     } catch (error) {
-      // Check for a specific 401 Unauthorized status from the API
-      if (error.response && error.response.status === 401) {
+      // Provide specific guidance depending on the HTTP status
+      const status = error.response?.status;
+      const serverMessage = error.response?.data?.message;
+      if (status === 401) {
         showAlert('Email or password is incorrect', 'error');
+      } else if (status === 403) {
+        // Admin-only restriction: give a friendly explanation
+        const msg = serverMessage || 'Access denied: this portal is for admin accounts only.';
+        showAlert(`${msg} If you need access, contact your administrator.`, 'error');
       } else {
-        // For other types of errors (e.g., network issues, server errors),
-        // show a more generic message
-        const errorMessage = error.response?.data?.message || 'Something went wrong';
+        const errorMessage = serverMessage || 'Something went wrong';
         showAlert(`Login failed: ${errorMessage}`, 'error');
       }
     }

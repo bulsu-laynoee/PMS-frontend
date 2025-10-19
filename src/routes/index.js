@@ -15,6 +15,8 @@ import EditParkingLayout from 'pages/EditParkingLayout';
 import Settings from 'pages/Settings';
 import AdminCreateUser from 'pages/AdminCreateUser';
 import IncidentManagement from 'pages/IncidentManagement';
+import Notifications from 'pages/notifications';
+import FeedbackPage from 'pages/feedback';
 
 const MainRoutes = () => {
     return (
@@ -33,6 +35,8 @@ const MainRoutes = () => {
                     <Route path="admin/create-user" element={<AdminCreateUser />} />
                     <Route path="editparkingspace" element={<EditParking />} />
                     <Route path="messages" element={<Messages />} />
+                    <Route path="notifications" element={<Notifications />} />
+                    <Route path="feedback" element={<FeedbackPage />} />
                     <Route path="incidents" element={<IncidentManagement />} />
                     <Route path="pendinglist" element={<PendingList />} />
                     <Route path="settings" element={<Settings />} />
