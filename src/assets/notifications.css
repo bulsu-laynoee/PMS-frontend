@@ -1,0 +1,202 @@
+/* Notifications.module.css */
+.container {
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  background-color: #f9fafb;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-weight: 800;
+  font-size: 1.75rem;
+  margin: 0;
+  color: #111827;
+}
+
+.refreshButton {
+  padding: 10px 16px;
+  border-radius: 8px;
+  background-color: #c34c4d; /* Your brand color */
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.refreshButton:hover {
+  background-color: #a94243;
+}
+
+.list {
+  display: grid;
+  gap: 16px;
+}
+
+.noItems {
+  color: #6b7280;
+  padding: 32px;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+/* --- Notification Item Card --- */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.2s ease;
+}
+
+.cardUnread {
+  /* You can add a subtle difference for unread, like a border */
+  border-left: 4px solid #1976d2;
+}
+
+.cardRead {
+  background: #f8f9fa; /* Slightly dimmer bg for read items */
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07),
+    0 4px 6px -2px rgba(0, 0, 0, 0.04);
+}
+
+.cardContent {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.iconFeedback {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.iconIncident {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.main {
+  flex-grow: 1;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.time {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.summaryTitle {
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.summaryDetails {
+  margin-top: 6px;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.actions {
+  padding: 12px 16px;
+  background-color: #fdfdfd;
+  border-top: 1px solid #f3f4f6;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.readReceipt {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.markReadButton {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.markReadButton:hover {
+  background: #1565c0;
+}
+
+/* --- Status Pill --- */
+.statusPill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusRead {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.statusUnread {
+  background: #fff8e1;
+  color: #ff8f00;
+}
+
+/* --- Placeholder --- */
+.placeholderCard {
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+.placeholderBar {
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  height: 16px;
+  margin-bottom: 10px;
+}

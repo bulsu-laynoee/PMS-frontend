@@ -393,16 +393,6 @@ const Parkingspaces = () => {
               className={styles['search-input']}
             />
           </div>
-          <div className={styles['search-input-wrapper']}>
-            <FaSearch className={styles['search-icon']} />
-            <input
-              type="text"
-              placeholder="Search by Plate Number..."
-              value={searchPlate}
-              onChange={(e) => setSearchPlate(e.target.value)}
-              className={styles['search-input']}
-            />
-          </div>
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}

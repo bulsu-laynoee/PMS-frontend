@@ -1,0 +1,443 @@
+/* IncidentManagement.module.css */
+.container {
+  padding: 24px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  background-color: #f9fafb;
+}
+
+/* --- Page Header --- */
+.pageHeader {
+  background: linear-gradient(135deg, #8f2b2b, #ec4545);
+  color: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 20px -5px rgba(195, 76, 77, 0.2);
+}
+.pageTitle {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  font-size: 2rem;
+}
+.pageSubtitle {
+  margin-top: 4px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* --- Stats Row --- */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+.statIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+}
+.statTitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* --- Controls --- */
+.controlsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.tabsNav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 6px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+}
+.tabButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 2px solid transparent; /* For layout stability */
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+.tabButton:hover:not(.tabButtonActive) {
+  background: #f3f4f6;
+  color: #111827;
+}
+.tabButtonActive {
+  background: #eef6ff;
+  color: #1976d2;
+  border-color: #eef6ff;
+  box-shadow: 0 2px 5px rgba(25, 118, 210, 0.1);
+}
+.tabCount {
+  font-size: 0.8rem;
+  font-weight: 800;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+.tabButtonActive .tabCount {
+  background-color: #1976d2;
+  color: #fff;
+}
+.searchWrapper {
+  position: relative;
+  flex-grow: 1;
+}
+.searchInput {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 1rem;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease-in-out;
+}
+.searchInput:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.15);
+}
+.searchInputIcon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+.refreshButton {
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #c34c4d;
+  color: #fff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(195, 76, 77, 0.18);
+  transition: all 0.2s ease;
+}
+.refreshButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(195, 76, 77, 0.25);
+}
+
+/* --- Section --- */
+.sectionTitle {
+  font-weight: 800;
+  font-size: 1.5rem;
+  margin-bottom: 16px;
+  margin-top: 32px;
+}
+.noItems {
+  padding: 40px;
+  color: #6b7280;
+  text-align: center;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 1rem;
+}
+.incidentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+.incidentList {
+  display: grid;
+  gap: 12px;
+}
+
+/* --- Status Pill --- */
+.statusPill {
+  position: absolute;
+  left: 16px;
+  top: -14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 2px solid #fff;
+}
+.statusOpen {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+.statusAcknowledged {
+  background: #fff8e1;
+  color: #ff8f00;
+}
+.statusClosed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+.statusReported {
+  background: #ffebee;
+  color: #c62828;
+}
+
+/* --- Incident Card --- */
+.card {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+  transition: all 180ms ease-in-out;
+  margin-top: 14px; /* Make space for pill */
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+.cardBody {
+  padding: 24px 20px 16px;
+}
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.cardTitle {
+  font-weight: 800;
+  font-size: 1.125rem;
+  color: #111827;
+}
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+.cardDescription {
+  margin-top: 8px;
+  color: #4b5563;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px 20px;
+  border-top: 1px solid #f3f4f6;
+  background-color: #fcfcfc;
+  border-radius: 0 0 12px 12px;
+}
+.cardUser {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1976d2;
+}
+.cardActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.iconButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.iconButtonAcknowledge {
+  background: #1976d2;
+  color: #fff;
+}
+.iconButtonAcknowledge:hover {
+  background: #1565c0;
+}
+.iconButtonClose {
+  background: #d32f2f;
+  color: #fff;
+}
+.iconButtonClose:hover {
+  background: #b71c1c;
+}
+.iconButtonDetails {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+}
+.iconButtonDetails:hover {
+  background: #f3f4f6;
+}
+.iconButtonDetailsActive {
+  background: #f3f4f6;
+}
+.closedBadge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* --- Details Section --- */
+.detailsPane {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #f3f4f6;
+  color: #374151;
+}
+.detailsTitle {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* --- List Variant --- */
+.cardList {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+}
+.cardListSeverity {
+  width: 80px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.severityLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.severityValue {
+  margin-top: 4px;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+.cardListMain {
+  flex-grow: 1;
+}
+.cardListActions {
+  width: 140px; /* 3*40px + 2*8px */
+  flex-shrink: 0;
+}
+.detailsPaneList {
+  /* Spans full width inside flex */
+  flex-basis: 100%;
+  margin: 0 20px 16px;
+}
+
+/* --- Report Count Circle --- */
+.reportCount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #fff;
+  background-color: #1976d2; /* Default blue for 1 */
+  margin-left: 12px;
+}
+.reportCountMedium {
+  background-color: #f57c00; /* Orange for 2 */
+}
+.reportCountHigh {
+  background-color: #d32f2f; /* Red for 3+ */
+}
+
+/* --- NEW: Skeleton Loader Styles --- */
+.skeletonCard {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  margin-top: 14px;
+  padding: 24px 20px 16px;
+}
+.skeletonListCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 20px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+.skeletonAnimate {
+  animation: skeleton-loading 1.5s infinite linear;
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200% 100%;
+}
+.skeletonBar {
+  border-radius: 6px;
+  height: 16px;
+}
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

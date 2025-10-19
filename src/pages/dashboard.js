@@ -9,8 +9,8 @@ import {
   FaExclamationTriangle,
   FaArrowRight,
   FaCar,
-  FaFeedback
 } from 'react-icons/fa';
+import { MdFeedback } from 'react-icons/md';
 import { getUserName, getToken } from '../utils/auth';
 import api from '../utils/api';
 import 'assets/dashboard.css';
@@ -145,10 +145,10 @@ const Dashboard = () => {
             description="Address and resolve reported incidents."
           />
           <DashboardCard
-            onClick={() => navigate('/home/notifications')}
-            icon={<FaBell className="card-icon" />}
-            title="Notifications"
-            description="Check recent alerts and updates."
+            onClick={() => navigate('/home/feedback')}
+            icon={<MdFeedback className="card-icon" />}
+            title="Feedback"
+            description="Review submitted user feedback."
           />
           <DashboardCard
             onClick={() => navigate('/home/messages')}

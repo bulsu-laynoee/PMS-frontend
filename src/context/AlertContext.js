@@ -26,6 +26,10 @@ export const AlertProvider = ({ children }) => {
     const detectType = (msg) => {
       if (!msg) return 'success';
       const s = String(msg).toLowerCase();
+
+      // Force error for known reservation / already parked warnings from backend
+      if (/already\s+parked|has\s+a\s+reservation|already\s+parked\s+or\s+has\s+a\s+reservation/i.test(s)) return 'error';
+
       // error indicators
       if (/(\bfail|failed\b|\berror\b|\binvalid\b|\bcannot\b|can't|\bunable\b|\bdenied\b|\bforbidden\b|unauthor)/i.test(s)) return 'error';
       // success indicators

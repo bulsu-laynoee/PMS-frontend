@@ -1,62 +1,132 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { FaSync, FaStar, FaUserCircle, FaCommentDots, FaStarHalfAlt } from 'react-icons/fa';
 import api from '../utils/api';
+import 'assets/feedback.css';
 
-// Small helper for human-friendly times
+// Helper to format time difference
 function timeAgo(iso) {
   if (!iso) return '';
   try {
     const then = new Date(iso);
-    const diff = Math.floor((Date.now() - then.getTime()) / 1000);
-    if (diff < 60) return `${diff}s ago`;
-    const mins = Math.floor(diff / 60);
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    if (days < 30) return `${days}d ago`;
-    return then.toLocaleString();
-  } catch (e) { return iso; }
+    const diffSeconds = Math.floor((Date.now() - then.getTime()) / 1000);
+    if (diffSeconds < 60) return `${diffSeconds}s ago`;
+    const diffMins = Math.floor(diffSeconds / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
+  } catch (e) {
+    return iso;
+  }
 }
 
-// Visual star component (read-only)
+// Visual star rating component
 const Stars = ({ n = 0 }) => (
-  <span style={{ color: '#FFD700', fontWeight: 800, letterSpacing: 1 }}>{'★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n))}</span>
+  <div className="star-rating">
+    {[...Array(5)].map((_, i) => (
+      <FaStar key={i} className={i < n ? 'star-filled' : 'star-empty'} />
+    ))}
+  </div>
 );
 
-// Analytics bar shows simple metrics fetched from backend
+// Redesigned analytics card
+const StatCard = ({ title, value, icon, variant = 'red' }) => (
+  <div className="stat-card">
+    <div className={`stat-card-icon ${variant}`}>{icon}</div>
+    <div className="stat-card-content">
+      <div className="stat-card-title">{title}</div>
+      <div className="stat-card-value">{value}</div>
+    </div>
+  </div>
+);
+
+// Analytics section component
 function AnalyticsBar() {
   const [stats, setStats] = useState(null);
   useEffect(() => {
     let mounted = true;
-    api.get('/admin/feedback/stats').then(r => { if (!mounted) return; setStats(r.data || null); }).catch(() => {});
+    api.get('/admin/feedback/stats')
+      .then(r => { if (mounted) setStats(r.data || null); })
+      .catch(() => {});
     return () => { mounted = false; };
   }, []);
 
   if (!stats) return null;
-  const fiveCount = stats.counts?.['5'] ?? stats.counts?.[5] ?? 0;
+
   return (
-    <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-      <div style={{ flex: 1, background: '#fff', padding: 12, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.04)' }}>
-        <div style={{ fontSize: 12, color: '#666' }}>Total feedback</div>
-        <div style={{ fontWeight: 900, fontSize: 20 }}>{stats.total}</div>
-      </div>
-      <div style={{ flex: 1, background: '#fff', padding: 12, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.04)' }}>
-        <div style={{ fontSize: 12, color: '#666' }}>Average rating</div>
-        <div style={{ fontWeight: 900, fontSize: 20 }}>{stats.avg_rating} <span style={{ fontSize: 14, color: '#FFD700' }}>★</span></div>
-      </div>
-      <div style={{ flex: 1, background: '#fff', padding: 12, borderRadius: 8, boxShadow: '0 6px 18px rgba(0,0,0,0.04)' }}>
-        <div style={{ fontSize: 12, color: '#666' }}>5-star count</div>
-        <div style={{ fontWeight: 900, fontSize: 20 }}>{fiveCount}</div>
-      </div>
-    </div>
+    <section className="analytics-grid">
+      <StatCard title="Total Feedback" value={stats.total} icon={<FaCommentDots />} variant="red" />
+      <StatCard title="Average Rating" value={`${stats.avg_rating}`} icon={<FaStarHalfAlt />} variant="yellow" />
+      <StatCard title="5-Star Count" value={stats.counts?.['5'] ?? stats.counts?.[5] ?? 0} icon={<FaStar />} variant="green" />
+    </section>
   );
 }
+
+// Redesigned single feedback card
+const FeedbackCard = ({ item, user }) => {
+    const [isExpanded, setIsExpanded] = useState(false); // State for "Read more"
+
+    const userName = user ? user.name : 'Anonymous';
+    const userAvatar = user ? user.profile_pic : null;
+    const comment = item.comments || item.message || 'No comment provided.';
+    
+    // Check if comment needs truncation (e.g., > 150 chars)
+    const needsTruncation = comment.length > 150;
+
+    return (
+        <div className="feedback-card">
+            <div className="feedback-content">
+                <div className="feedback-header">
+                    <div className="feedback-icon-wrapper">
+                        {userAvatar ? <img src={userAvatar} alt={userName} className="user-avatar" /> : <FaUserCircle />}
+                    </div>
+                    <div className="feedback-user-info">
+                        <span className="user-name">{userName}</span>
+                        <Stars n={item.rating ?? 0} />
+                    </div>
+                </div>
+                
+                {/* Enhanced comment section */}
+                <p className="feedback-comment">
+                    {isExpanded ? comment : `${comment.substring(0, 150)}${needsTruncation ? '...' : ''}`}
+                </p>
+                {needsTruncation && (
+                    <button onClick={() => setIsExpanded(!isExpanded)} className="read-more-button">
+                        {isExpanded ? 'Show less' : 'Read more'}
+                    </button>
+                )}
+            </div>
+            <div className="feedback-footer">
+                <span className="feedback-time">{timeAgo(item.date_time ?? item.created_at)}</span>
+            </div>
+        </div>
+    );
+};
+
+// Enhanced Skeleton Loader
+const SkeletonCard = () => (
+    <div className="feedback-card-placeholder">
+        <div className="placeholder-header">
+            <div className="placeholder-icon skeleton-animate" />
+            <div className="placeholder-text-group">
+                <div className="skeleton-bar skeleton-animate" style={{ width: '40%', height: '14px', marginBottom: '6px' }} />
+                <div className="skeleton-bar skeleton-animate" style={{ width: '30%', height: '12px' }} />
+            </div>
+        </div>
+        <div className="skeleton-bar skeleton-animate" style={{ width: '100%', height: '12px', marginBottom: '8px' }} />
+        <div className="skeleton-bar skeleton-animate" style={{ width: '90%', height: '12px', marginBottom: '8px' }} />
+        <div className="skeleton-bar skeleton-animate" style={{ width: '60%', height: '12px' }} />
+    </div>
+);
+
 
 export default function FeedbackPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [usersCache, setUsersCache] = useState({});
-  const [openIds, setOpenIds] = useState({});
 
   const load = async () => {
     setLoading(true);
@@ -64,92 +134,80 @@ export default function FeedbackPage() {
       const candidates = ['/admin/feedback', '/admin/feedback/list', '/feedback/list'];
       let res = null;
       for (const p of candidates) {
-        try { res = await api.get(p); if (res) break; } catch (e) { /* try next */ }
+        try {
+          res = await api.get(p);
+          if (res) break;
+        } catch (e) { /* try next */ }
       }
       const data = res?.data?.data ?? res?.data ?? res ?? [];
-      const rows = Array.isArray(data) ? data : (data.data ?? data);
-      setItems(rows || []);
+      const rows = Array.isArray(data) ? data : (data.data ?? []);
+      setItems(rows.sort((a,b) => new Date(b.created_at || b.date_time) - new Date(a.created_at || a.date_time)) || []);
 
-      const ids = Array.from(new Set((rows || []).map(r => r.user_id).filter(Boolean)));
+      const ids = Array.from(new Set(rows.map(r => r.user_id).filter(Boolean)));
       const missing = ids.filter(id => !usersCache[id]);
+
       await Promise.all(missing.map(async id => {
         try {
           const r = await api.get(`/users/${id}`);
           const u = r.data?.data ?? r.data ?? r;
-          setUsersCache(prev => ({ ...prev, [id]: u?.name || u?.full_name || u?.email || `#${id}` }));
-        } catch (e) { setUsersCache(prev => ({ ...prev, [id]: `#${id}` })); }
+          setUsersCache(prev => ({ ...prev, [id]: {
+            name: u?.name || u?.full_name || u?.email || `User #${id}`,
+            profile_pic: u?.profile_pic || null,
+            roles_id: u?.roles_id || null // Still fetching it, just not using for color
+          }}));
+        } catch (e) {
+          setUsersCache(prev => ({ ...prev, [id]: { name: `User #${id}`, profile_pic: null, roles_id: null } }));
+        }
       }));
     } catch (e) {
       console.error('Failed to load feedback', e);
       setItems([]);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
 
   return (
-    <div style={{ padding: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h2 style={{ fontWeight: 900, margin: 0 }}>Feedback</h2>
-        <div>
-          <button onClick={load} style={{ padding: '8px 12px', borderRadius: 8, background: '#1976D2', color: '#fff', border: 'none' }}>Refresh</button>
-        </div>
-      </div>
-
-      <AnalyticsBar />
-
-      <div style={{ display: 'grid', gap: 14 }}>
-        {loading ? (
-          [1,2,3].map(i => (
-            <div key={`ph-${i}`} style={{ position: 'relative', background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.04)', minHeight: 120 }}>
-              <div style={{ width: '50%', height: 16, background: '#eee', borderRadius: 6, marginBottom: 8 }} />
-              <div style={{ width: '30%', height: 12, background: '#f3f3f3', borderRadius: 6 }} />
-            </div>
-          ))
-        ) : (
-          items.length === 0 ? (
-            <div style={{ color: '#666' }}>No feedback.</div>
-          ) : (
-            items.map(f => {
-              const isOpen = !!openIds[f.id];
-              return (
-                <div key={f.id || JSON.stringify(f)} style={{ position: 'relative', background: '#fff', padding: 16, borderRadius: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.04)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 800 }}>{f.title ?? `Feedback #${f.id}`}</div>
-                      <div style={{ marginTop: 8, color: '#555' }}>
-                        From: <strong>{f.user_id ? (usersCache[f.user_id] || `#${f.user_id}`) : 'Anonymous'}</strong>
-                        <span style={{ marginLeft: 12 }}><Stars n={f.rating ?? 0} /></span>
-                      </div>
-                      <div style={{ marginTop: 8, color: '#444' }}>{f.comments || f.message || ''}</div>
-                      <div style={{ marginTop: 8, color: '#666', fontSize: 13 }}>{timeAgo(f.date_time ?? f.created_at)}</div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <button type="button" onClick={() => setOpenIds(prev => ({ ...prev, [f.id]: !prev[f.id] }))} aria-label="Toggle details" title="Details" style={{ width: 44, height: 44, borderRadius: 10, border: '1px solid #eee', background: isOpen ? '#f7f7f7' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="#666" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {isOpen && (
-                    <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#fafafa', color: '#444' }}>
-                      <div style={{ marginBottom: 8 }}>
-                        <div><strong>Rating:</strong> <Stars n={f.rating ?? 0} /></div>
-                        <div style={{ marginTop: 6 }}><strong>Comments:</strong> {f.comments ?? f.message ?? '—'}</div>
-                        <div style={{ marginTop: 6 }}><strong>User:</strong> {f.user_id ? (usersCache[f.user_id] || `#${f.user_id}`) : 'Anonymous'}</div>
-                      </div>
-                      <details style={{ background: '#fff', padding: 10, borderRadius: 6, border: '1px solid #eee' }}>
-                        <summary style={{ cursor: 'pointer', color: '#666', fontSize: 13 }}>Raw JSON</summary>
-                        <pre style={{ whiteSpace: 'pre-wrap', marginTop: 8 }}>{JSON.stringify(f, null, 2)}</pre>
-                      </details>
-                    </div>
-                  )}
+    <main className="main-content">
+        <div className="content-wrapper">
+            <header className="feedback-header">
+                <div>
+                    <h1 className="feedback-title">User Feedback</h1>
+                    <nav className="breadcrumbs">
+                        <Link to="/home/dashboard">Dashboard</Link>
+                        <span>/</span>
+                        <span className="breadcrumb-active">Feedback</span>
+                    </nav>
                 </div>
-              );
-            })
-          )
-        )}
-      </div>
-    </div>
+                <button onClick={load} className="refresh-button" disabled={loading} title="Refresh">
+                    <FaSync className={loading ? 'icon-spinning' : ''} />
+                </button>
+            </header>
+
+            <AnalyticsBar />
+
+            <div className="feedback-list">
+                {loading ? (
+                    [...Array(6)].map((_, i) => (
+                        <SkeletonCard key={`ph-${i}`} />
+                    ))
+                ) : (
+                    items.length === 0 ? (
+                        <div className="no-feedback-message">No feedback has been submitted yet.</div>
+                    ) : (
+                        items.map(item => (
+                            <FeedbackCard
+                                key={item.id || JSON.stringify(item)}
+                                item={item}
+                                user={item.user_id ? usersCache[item.user_id] : null}
+                            />
+                        ))
+                    )
+                )}
+            </div>
+        </div>
+    </main>
   );
 }

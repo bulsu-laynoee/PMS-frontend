@@ -43,6 +43,9 @@ const UserAvatar = ({ name }) => {
 };
 
 export default function Messages() {
+  // Notes: realtime improvements and search enhancements
+  // - Subscribes to conversation.{id} channels so sidebar and open convo update live
+  // - Search now matches participant names and emails, plus conversation title/name
   const [conversations, setConversations] = useState([]);
   const [activeConv, setActiveConv] = useState(null);
   const [messageText, setMessageText] = useState('');
@@ -51,6 +54,9 @@ export default function Messages() {
 
   const echoSubscription = useRef(null);
   const messagesEndRef = useRef(null);
+  const lastAutoOpenRef = useRef({ id: null, ts: 0 });
+  const activeConvRef = useRef(null);
+  const conversationsRef = useRef([]);
 
   // Reliable global current user detection (many fallbacks)
   const globalCurrentUser = typeof window !== 'undefined'
@@ -77,7 +83,7 @@ export default function Messages() {
       const res = await api.get('/conversations', { params: { q: query } });
       const data = res.data.data || res.data;
       const conversations = data.data || data;
-      console.log('DEBUG: Loaded conversations:', conversations);
+      console.debug('DEBUG: Loaded conversations (API):', conversations);
       console.log('DEBUG: Current user detection:', {
         currentUser,
         globalCurrentUser,
@@ -85,6 +91,8 @@ export default function Messages() {
         globalCurrentUserEmail
       });
       setConversations(conversations);
+      // keep ref in sync immediately
+      try { conversationsRef.current = conversations; } catch (err) {}
     } catch (e) {
       console.error('Failed to load conversations', e);
     }
@@ -117,7 +125,10 @@ export default function Messages() {
         echoSubscription.currentConvId = conversationId; // Store the ID for cleanup
 
         channel.listen('MessageSent', (e) => {
-          const newMessage = e.message;
+        // DEBUG: incoming event (openConversation-level listener)
+        try { console.debug('Echo MessageSent (open) received for conv', fetchedConv.id, e); } catch (err) {}
+        // normalize message payload (backend may send different shapes)
+        const newMessage = e?.message || e?.data?.message || e?.data || e || null;
 
           // 1. Update the main conversation list (for the sidebar)
           setConversations(prevConvs =>
@@ -151,8 +162,63 @@ export default function Messages() {
             // If not the active conversation, don't change the window
             return prevActiveConv;
           });
+
+          // Ensure we refresh the conversation list and load messages if admin
+          // doesn't have any active conversation open. This forces the UI to
+          // show the incoming message without a manual refresh.
+          try {
+            // refresh sidebar list (debounced by lastAutoOpenRef)
+            loadConversations().catch(() => {});
+            if (!activeConvRef.current) {
+              const now = Date.now();
+              if (!(lastAutoOpenRef.current.id === fetchedConv.id && (now - lastAutoOpenRef.current.ts) < 3000)) {
+                lastAutoOpenRef.current = { id: fetchedConv.id, ts: now };
+                const convObj = (conversationsRef.current || []).find(c => c.id === fetchedConv.id) || fetchedConv;
+                if (convObj && typeof openConversation === 'function') openConversation(convObj).catch(() => {});
+              }
+            }
+          } catch (err) {}
         });
       }
+
+        // Also ensure global per-conversation subscriptions map is updated so the sidebar
+        // receives events even when a conversation is not actively opened. We'll create
+        // a lightweight subscription for this conversation id if not present.
+        try {
+          if (window.Echo && typeof window.Echo.private === 'function') {
+            const sidebarChannelName = `conversation.${fetchedConv.id}`;
+            // store in a map for cleanup
+            if (!echoSubscription.map) echoSubscription.map = {};
+            if (!echoSubscription.map[fetchedConv.id]) {
+              const ch = window.Echo.private(sidebarChannelName);
+              ch.listen('MessageSent', (e) => {
+                try { console.debug('Echo MessageSent (map) received for conv', fetchedConv.id, e); } catch (err) {}
+                const m = e?.message || e?.data?.message || e?.data || e || null;
+                // Update sidebar item timestamp/count
+                setConversations(prev => prev.map(c => c.id === fetchedConv.id ? ({
+                  ...c,
+                  last_message_at: m && m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : c.last_message_at,
+                  messages_count: (c.messages_count || 0) + 1
+                }) : c));
+                // Refresh conversations list and possibly auto-open
+                try {
+                  loadConversations().catch(() => {});
+                  if (!activeConvRef.current) {
+                    const now = Date.now();
+                    if (!(lastAutoOpenRef.current.id === fetchedConv.id && (now - lastAutoOpenRef.current.ts) < 3000)) {
+                      lastAutoOpenRef.current = { id: fetchedConv.id, ts: now };
+                      const convObj = (conversationsRef.current || []).find(c => c.id === fetchedConv.id) || fetchedConv;
+                      if (convObj && typeof openConversation === 'function') openConversation(convObj).catch(() => {});
+                    }
+                  }
+                } catch (err) {}
+              });
+              echoSubscription.map[fetchedConv.id] = ch;
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to create sidebar subscription', err);
+        }
       // --- END: MODIFIED ECHO LOGIC ---
 
     } catch (e) {
@@ -204,6 +270,10 @@ export default function Messages() {
   useEffect(() => {
     if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [activeConv?.messages]);
+
+  // Keep refs in sync to avoid stale closures inside Echo listeners
+  useEffect(() => { activeConvRef.current = activeConv; }, [activeConv]);
+  useEffect(() => { conversationsRef.current = conversations; }, [conversations]);
 
   // ======= NAME RESOLUTION: use same logic everywhere =======
   // Try many possible fields commonly returned by backends
@@ -284,11 +354,156 @@ export default function Messages() {
   const filteredConversations = useMemo(() => {
     const q = (query || '').trim().toLowerCase();
     if (!q) return conversations;
-    return conversations.filter(c => {
-      const label = getDisplayNameForConversation(c).toLowerCase();
-      return label.includes(q);
-    });
+
+    const searchableText = (c) => {
+      const parts = [];
+      try {
+        const display = getDisplayNameForConversation(c);
+        if (display) parts.push(display);
+        if (c.title) parts.push(c.title);
+        if (c.name) parts.push(c.name);
+        if (c.id) parts.push(String(c.id));
+        // include users' names and emails
+        const users = c.users || c.participants || c.members || [];
+        (users || []).forEach(u => {
+          if (!u) return;
+          if (u.display_name) parts.push(u.display_name);
+          if (u.name) parts.push(u.name);
+          if (u.full_name) parts.push(u.full_name);
+          if (u.email) parts.push(u.email);
+          if (u.username) parts.push(u.username);
+        });
+      } catch (err) {
+        // ignore
+      }
+      return parts.join(' ').toLowerCase();
+    };
+
+    return conversations.filter(c => searchableText(c).includes(q));
   }, [conversations, query]);
+
+  // Subscribe to conversation channels for realtime updates (sidebar + active convo)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.Echo) return;
+    if (!echoSubscription.map) echoSubscription.map = {};
+
+    const subscribe = (convId) => {
+      if (!convId) return;
+      if (echoSubscription.map[convId]) return;
+      try {
+        const ch = window.Echo.private(`conversation.${convId}`);
+        ch.listen('MessageSent', (e) => {
+          const m = e.message;
+          // update sidebar list
+          setConversations(prev => prev.map(c => c.id === convId ? ({
+            ...c,
+            last_message_at: m.created_at ? new Date(m.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : c.last_message_at,
+            messages_count: (c.messages_count || 0) + 1
+          }) : c));
+          // update active convo if open
+          setActiveConv(prev => {
+            if (prev && prev.id === convId) {
+              if (prev.messages && prev.messages.some(msg => msg.id === m.id)) return prev;
+              return { ...prev, messages: [...(prev.messages || []), m] };
+            }
+            return prev;
+          });
+
+          // If there's no active conversation open, auto-open this one so admin
+          // immediately sees the incoming message. Avoid forcing open if admin
+          // is already viewing another conversation. Also debounce auto-open to
+          // prevent repeated opens when multiple messages arrive quickly.
+          try {
+            if (!activeConv) {
+              const now = Date.now();
+              if (lastAutoOpenRef.current.id === convId && (now - lastAutoOpenRef.current.ts) < 3000) {
+                // recently auto-opened this conv, skip
+              } else {
+                lastAutoOpenRef.current = { id: convId, ts: now };
+                const convObj = conversations.find(c => c.id === convId);
+                if (convObj && typeof openConversation === 'function') {
+                  openConversation(convObj).catch(() => {});
+                }
+              }
+            }
+          } catch (err) {
+            // ignore
+          }
+        });
+        echoSubscription.map[convId] = ch;
+      } catch (err) {
+        console.warn('subscribe error', convId, err);
+      }
+    };
+
+    conversations.forEach(c => subscribe(c.id));
+
+    return () => {
+      try {
+        Object.keys(echoSubscription.map || {}).forEach(id => {
+          try { echoSubscription.map[id].stopListening('MessageSent'); } catch (e) {}
+          try { window.Echo.leave(`private:conversation.${id}`); } catch (e) {}
+        });
+      } catch (err) {}
+      echoSubscription.map = {};
+    };
+  }, [conversations]);
+
+  // Polling fallback: if Echo is not connected, poll the API for updates.
+  useEffect(() => {
+    let interval = null;
+    let isRunning = false;
+    const shouldPoll = () => {
+      try {
+        if (!window.Echo) return true;
+        // if Echo exists check connector state if possible
+        const conn = window.Echo && window.Echo.connector && window.Echo.connector.socket;
+        if (!conn) return true;
+        // if socket has connected property, use it
+        if (conn.connected === false) return true;
+        return false;
+      } catch (err) {
+        return true;
+      }
+    };
+
+    const poll = async () => {
+      if (isRunning) return;
+      if (!shouldPoll()) return;
+      isRunning = true;
+      try {
+        await loadConversations();
+        // if active conversation open, reload its messages
+        if (activeConvRef.current && activeConvRef.current.id) {
+          try {
+            const res = await api.get(`/conversations/${activeConvRef.current.id}`);
+            const payload = res.data.data || res.data;
+            const fetchedConv = payload.conversation ? payload.conversation : payload;
+            const msgs = payload.messages?.data || payload.messages || [];
+            // update active conv state/ref
+            setActiveConv(prev => ({ ...fetchedConv, messages: msgs }));
+            activeConvRef.current = { ...fetchedConv, messages: msgs };
+          } catch (err) {
+            // ignore per-interval errors
+          }
+        }
+      } catch (err) {
+        // ignore
+      } finally {
+        isRunning = false;
+      }
+    };
+
+    // Start interval if polling is needed
+    if (shouldPoll()) {
+      interval = setInterval(poll, 3000);
+      // run once immediately
+      poll();
+      console.debug('Messages: polling fallback started');
+    }
+
+    return () => { if (interval) clearInterval(interval); };
+  }, [/* no deps: rely on refs and loadConversations */]);
 
   // Render
 return (
@@ -423,7 +638,7 @@ return (
             <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} style={{ display: 'flex', padding: '12px 20px', background: '#fff', borderTop: '1px solid #f1f5f9', gap: '12px', alignItems: 'center' }}>
               <input
                 value={messageText}
-                onChange={(e) => setMessageText(e.gexitt.value)}
+                onChange={(e) => setMessageText(e.target.value)}
                 placeholder="Type a message..."
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
                 style={{ flex: 1, fontSize: 15, padding: '12px 16px', borderRadius: '9999px', border: 'none', backgroundColor: '#f1f5f9', outline: 'none' }}
@@ -438,3 +653,4 @@ return (
     </div>
   );
 }
+

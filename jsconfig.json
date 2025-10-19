@@ -13,6 +13,6 @@
           "assets/*": ["src/assets/*"]
       }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/pages/notifications.js"],
   "exclude": ["node_modules"]
 }

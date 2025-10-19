@@ -1,6 +1,7 @@
+/* --- Main Container --- */
 .userlist-container {
-  padding: 40px 60px;
-  background-color: #fff;
+  padding: 30px 40px;
+  background-color: #f8f9fa;
   min-height: 100vh;
   width: 100%;
   box-sizing: border-box;
@@ -13,159 +14,275 @@
   align-items: center;
   margin-bottom: 25px;
   flex-wrap: wrap;
-  row-gap: 15px;
+  row-gap: 20px;
 }
 
 .userlist-header h2 {
   color: #a73737;
   font-size: 32px;
   margin: 0;
+  font-weight: 700;
 }
 
-.role-buttons {
+.header-left-side {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.role-buttons button {
-  background-color: white;
-  border: 1px solid #e6e6e6;
-  color: #333;
-  display: inline-flex;
+.breadcrumbs {
+  display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: 0.18s ease-in-out;
+  font-size: 16px;
+  font-weight: 500;
 }
 
-.role-buttons button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+.breadcrumbs a {
+  color: #6c757d;
+  text-decoration: none;
+  transition: color 0.2s ease;
 }
 
-.role-buttons button.active {
-  background-color: #a73737; /* maroon background for selected */
-  border-color: #7f2d2d;
-  color: #ffffff;
-  font-weight: 700;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+.breadcrumbs a:hover {
+  color: #a73737;
+  text-decoration: underline;
 }
 
-/* ensure Guard still uses same maroon style when active */
-.role-buttons button.guard-active,
-.role-buttons button[data-role="Guard"].active {
-  background-color: #7f2d2d;
-  color: #fff;
+.breadcrumbs span {
+  color: #b0b0b0;
 }
 
-/* --- Actions Row --- */
-.userlist-actions {
+.breadcrumbs .breadcrumb-active {
+  color: #212529;
+  font-weight: 600;
+}
+
+/* --- Role Buttons --- */
+.role-buttons {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
   flex-wrap: wrap;
   gap: 16px;
 }
 
-.left-actions,
-.right-actions {
+.role-buttons button {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.left-actions .action-btn {
-  background-color: white;
-  border: 2px solid #cc4444;
-  color: #cc4444;
-  font-weight: 600;
-  padding: 10px 20px;
-  border-radius: 8px;
+  align-items: center;
+  gap: 14px;
+  color: #333;
   cursor: pointer;
-  font-size: 14px;
-}
-
-.left-actions .action-btn:hover {
-  background-color: #cc4444;
-  color: white;
-}
-
-.right-actions input,
-.right-actions select {
-  padding: 10px 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 14px;
+  transition: all 0.2s ease;
   min-width: 180px;
 }
 
-/* --- Table --- */
+.role-buttons button:hover {
+  border-color: #c0c0c0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.role-buttons button.active {
+  background: linear-gradient(90deg, #8f2b2b, #cf3636);
+  color: #fff;
+  border-color: #a73737;
+  box-shadow: 0 4px 15px rgba(167, 55, 55, 0.3);
+}
+
+.role-icon {
+  font-size: 28px;
+  color: #a73737;
+  transition: color 0.2s ease;
+  padding: 8px;
+  background-color: #fdf7f7;
+  border-radius: 8px;
+}
+
+.role-buttons button.active .role-icon {
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+.role-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.role-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.role-count {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+/* --- Actions Row (Search/Buttons) --- */
+.userlist-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.left-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.nav-button {
+  background: #fff;
+  color: #555;
+  border: 2px solid #ddd;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-button:hover {
+  border-color: #bbb;
+  background: #f9f9f9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.nav-button.primary {
+  background: #a73737;
+  border-color: #a73737;
+  color: #fff;
+}
+
+.nav-button.primary:hover {
+  background: #8e2d2d;
+  border-color: #8e2d2d;
+}
+
+.right-actions input {
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 250px;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.right-actions input:hover {
+  border-color: #c0c0c0;
+}
+
+.right-actions input:focus {
+  outline: none;
+  border-color: #a73737;
+  box-shadow: 0 0 0 3px rgba(167, 55, 55, 0.15);
+}
+
+/* --- Table Styling --- */
+.table-wrapper {
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
 .userlist-table {
   width: 100%;
   border-collapse: collapse;
-  background-color: #f9f9f9;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .userlist-table th,
 .userlist-table td {
-  padding: 16px 24px;
-  border-bottom: 1px solid #ddd;
-  font-size: 15px;
-}
-
-.userlist-table th {
-  background-color: #f0f0f0;
-  font-weight: 600;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
   color: #333;
   text-align: left;
 }
 
-.userlist-table tr:hover {
-  background-color: #f5f5f5;
-}
-
-/* Modern button styles */
-.btn {
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+.userlist-table th {
+  background-color: #fcfcfc;
   font-weight: 600;
+  color: #555;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.btn-primary { background: #cc4444; color: #fff; }
-.btn-secondary { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
-.btn-danger { background: #d33; color: #fff; }
 
-/* Modal overrides */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
+.userlist-table tr:last-child td {
+  border-bottom: none;
+}
+
+.userlist-table tbody tr:hover {
+  background-color: #fdf7f7;
+}
+
+.user-name-cell {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 9999;
+  gap: 10px;
+  font-weight: 600;
 }
-.modal-content.modern {
-  width: 720px;
-  max-width: calc(100% - 40px);
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-  overflow: hidden;
-}
-.modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #eee; }
-.modal-title { margin:0; font-size:18px; color:#222; }
-.modal-close { background:transparent; border:none; font-size:18px; cursor:pointer; }
-.modal-body { padding:18px 20px; }
-.modal-footer { padding:12px 20px; border-top:1px solid #f3f3f3; display:flex; gap:8px; justify-content:flex-end; }
 
-.userlist-header h2 { color: #a73737; font-size: 30px; }
+.role-table-icon {
+  color: #a73737;
+}
+
+/* --- Action Buttons in Table --- */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-button {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  color: #333;
+}
+
+.action-button:hover {
+  background-color: #f5f5f5;
+  border-color: #ccc;
+}
+
+.action-button.secondary {
+  border-color: #a73737;
+  color: #a73737;
+}
+.action-button.secondary:hover {
+  background-color: #fdf7f7;
+}
+
+.action-button.tertiary {
+  border: none;
+  background: none;
+  color: #555;
+}
+.action-button.tertiary:hover {
+  background-color: #f0f0f0;
+}

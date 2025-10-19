@@ -1,0 +1,275 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { FaBell, FaExclamationTriangle, FaParking, FaSync, FaCheckDouble, FaStar, FaUndo } from 'react-icons/fa';
+import { MdFeedback } from 'react-icons/md';
+import api from '../utils/api';
+import 'assets/notifications.css';
+
+// Helper to format time difference
+function timeAgo(iso) {
+  if (!iso) return '';
+  try {
+    const then = new Date(iso);
+    const diffSeconds = Math.floor((Date.now() - then.getTime()) / 1000);
+    if (diffSeconds < 60) return `${diffSeconds}s ago`;
+    const diffMins = Math.floor(diffSeconds / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
+  } catch (e) {
+    return iso;
+  }
+}
+
+// Visual star rating component for feedback notifications
+const Stars = ({ n = 0 }) => (
+    <span className="notification-stars">
+      {[...Array(5)].map((_, i) => (
+        <FaStar key={i} className={i < n ? 'star-filled' : 'star-empty'} />
+      ))}
+    </span>
+);
+  
+// This component now contains the logic for rendering a single notification
+const NotificationCard = ({ notification, usersCache, onClick, onMarkUnread }) => {
+    const isUnread = !notification.read_at;
+
+    const getNotificationDetails = () => {
+        const details = {
+            icon: <FaBell />,
+            title: 'New Notification',
+            description: null,
+            className: 'notification-general'
+        };
+
+        let data = {};
+        if (typeof notification.data === 'string') {
+            try {
+                data = JSON.parse(notification.data);
+            } catch (e) { console.error("Failed to parse notification data:", e); }
+        } else {
+            data = notification.data || {};
+        }
+
+        const type = (notification.type || '').toLowerCase();
+        details.title = data.message || details.title;
+
+        if (type.includes('incident')) {
+            details.icon = <FaExclamationTriangle />;
+            details.className = 'notification-incident';
+            const reportedUserId = data.reported_user_id;
+            const userName = reportedUserId ? usersCache[reportedUserId] : null;
+            if (userName) {
+                details.description = <>Reported User: <strong>{userName}</strong></>;
+            }
+        } else if (type.includes('feedback')) {
+            details.icon = <MdFeedback />;
+            details.className = 'notification-feedback';
+            const feedbackUserId = data.user_id;
+            const userName = feedbackUserId ? usersCache[feedbackUserId] : 'Anonymous';
+            details.description = <>From: <strong>{userName}</strong> {data.rating && <Stars n={data.rating} />}</>;
+        } else if (type.includes('parking')) {
+            details.icon = <FaParking />;
+            details.className = 'notification-parking';
+            const assignedUserId = data.user_id;
+            const userName = assignedUserId ? usersCache[assignedUserId] : null;
+             if (userName) {
+                details.description = <>Assigned to: <strong>{userName}</strong></>;
+            }
+        }
+
+        return details;
+    };
+
+    const details = getNotificationDetails();
+
+    const handleMarkUnreadClick = (e) => {
+        e.stopPropagation();
+        onMarkUnread();
+    };
+
+    return (
+        <div
+            className={`notification-card ${isUnread ? 'unread' : ''} ${details.className}`}
+            onClick={onClick}
+        >
+            <div className="notification-icon-wrapper">
+                {details.icon}
+            </div>
+            <div className="notification-content">
+                <p className="notification-title-text">{details.title}</p>
+                {details.description && <div className="notification-description">{details.description}</div>}
+            </div>
+            <div className="notification-footer">
+                <span className="notification-time">{timeAgo(notification.created_at)}</span>
+                 {isUnread ? (
+                    <div className="unread-indicator" title="Unread">Unread</div>
+                ) : (
+                    <button className="mark-unread-button" title="Mark as unread" onClick={handleMarkUnreadClick}>
+                        <FaUndo />
+                    </button>
+                )}
+            </div>
+        </div>
+    );
+};
+
+
+export default function NotificationsPage() {
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [usersCache, setUsersCache] = useState({});
+    const navigate = useNavigate();
+
+    const loadNotifications = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get('/notifications');
+            const sortedNotifications = (res.data.data || res.data || []).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            setNotifications(sortedNotifications);
+
+            const userIdsToFetch = new Set();
+            sortedNotifications.forEach(n => {
+                let data = {};
+                 if (typeof n.data === 'string') {
+                    try { data = JSON.parse(n.data); } catch (e) {}
+                } else { data = n.data || {}; }
+
+                if (data.user_id) userIdsToFetch.add(data.user_id);
+                if (data.reported_user_id) userIdsToFetch.add(data.reported_user_id);
+            });
+
+            const missingIds = [...userIdsToFetch].filter(id => !usersCache[id]);
+            if (missingIds.length > 0) {
+                const userPromises = missingIds.map(id =>
+                    api.get(`/users/${id}`).then(res => ({ id, data: res.data.data || res.data }))
+                );
+                const userResults = await Promise.allSettled(userPromises);
+                const newUsers = {};
+                userResults.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value.data) {
+                        newUsers[result.value.id] = result.value.data.name || `User #${result.value.id}`;
+                    }
+                });
+                setUsersCache(prev => ({ ...prev, ...newUsers }));
+            }
+
+        } catch (e) {
+            console.error("Failed to load notifications", e);
+            setNotifications([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadNotifications();
+    }, []);
+
+    const handleNotificationClick = async (notification) => {
+        if (!notification.read_at) {
+            try {
+                setNotifications(prev =>
+                    prev.map(n =>
+                        n.id === notification.id ? { ...n, read_at: new Date().toISOString() } : n
+                    )
+                );
+                await api.post(`/notifications/${notification.id}/read`);
+            } catch (e) {
+                console.error("Failed to mark notification as read", e);
+                 setNotifications(prev =>
+                    prev.map(n =>
+                        n.id === notification.id ? { ...n, read_at: null } : n
+                    )
+                );
+            }
+        }
+        
+        let data = {};
+        if (typeof notification.data === 'string') {
+            try { data = JSON.parse(notification.data); } catch (e) {}
+        } else { data = notification.data || {}; }
+
+        let link = null;
+        const type = (notification.type || '').toLowerCase();
+        if (type.includes('incident')) link = '/home/incidents';
+        else if (type.includes('feedback')) link = '/home/feedback';
+        else if (type.includes('parking')) link = '/home/parkingspaces';
+
+        if (link) {
+            navigate(link);
+        }
+    };
+    
+    const handleMarkAllRead = async () => {
+        try {
+            setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
+            await api.post('/notifications/mark-all-read');
+        } catch (e) {
+            console.error("Failed to mark all notifications as read", e);
+            loadNotifications();
+        }
+    };
+
+    const handleMarkUnread = async (notificationId) => {
+        try {
+            setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read_at: null } : n));
+            await api.post(`/notifications/${notificationId}/unread`);
+        } catch(e) {
+            console.error("Failed to mark as unread", e);
+            loadNotifications();
+        }
+    };
+
+    const unreadCount = notifications.filter(n => !n.read_at).length;
+
+    return (
+        <main className="main-content">
+            <div className="content-wrapper">
+                <header className="notifications-header">
+                    <div>
+                        <h1 className="notifications-title-main">Notifications</h1>
+                        <nav className="breadcrumbs">
+                            <Link to="/home/dashboard">Dashboard</Link>
+                            <span>/</span>
+                            <span className="breadcrumb-active">Notifications</span>
+                        </nav>
+                    </div>
+                    <div className="header-actions">
+                        {unreadCount > 0 && (
+                            <button onClick={handleMarkAllRead} className="mark-all-read-button">
+                                <FaCheckDouble />
+                                <span>Mark All as Read</span>
+                            </button>
+                        )}
+                        <button onClick={loadNotifications} className="refresh-button" disabled={loading} title="Refresh">
+                            <FaSync className={loading ? 'icon-spinning' : ''} />
+                        </button>
+                    </div>
+                </header>
+
+                <div className="notifications-list">
+                    {loading ? (
+                        [...Array(4)].map((_, i) => <div key={i} className="notification-card-placeholder" />)
+                    ) : notifications.length === 0 ? (
+                        <div className="no-notifications-message">You have no notifications.</div>
+                    ) : (
+                        notifications.map(notification => (
+                            <NotificationCard
+                                key={notification.id}
+                                notification={notification}
+                                usersCache={usersCache}
+                                onClick={() => handleNotificationClick(notification)}
+                                onMarkUnread={() => handleMarkUnread(notification.id)}
+                            />
+                        ))
+                    )}
+                </div>
+            </div>
+        </main>
+    );
+}
+

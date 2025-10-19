@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import api from '../utils/api';
+// Import our new CSS Module
+import styles from 'assets/incident.management.module.css';
 
-// small human-friendly relative time helper
+// --- Helper Functions ---
 function timeAgo(iso) {
   if (!iso) return '';
   try {
@@ -20,149 +22,338 @@ function timeAgo(iso) {
   }
 }
 
-function IconSearch({ size = 16, color = '#666' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21 21l-4.35-4.35" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="11" cy="11" r="6" stroke={color} strokeWidth="2" />
-    </svg>
-  );
-}
+// --- Icons ---
+const IconSearch = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M21 21l-4.35-4.35" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="11" cy="11" r="6" stroke={color} strokeWidth="2" />
+  </svg>
+);
+const IconUser = ({ size = 16, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="2" />
+  </svg>
+);
+const IconClock = ({ size = 14, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+    <path d="M12 7v6l4 2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconCheck = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconX = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IconInfo = ({ size = 18, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+    <path d="M12 16v-4M12 8h.01" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+// --- Icons: New for Tabs & Stats ---
+const IconList = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const IconFolderOpen = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 17V7a2 2 0 012-2h5l2 2h7a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const IconEye = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const IconCheckCircle = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const IconFlag = ({ size = 16 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1v12zM4 21v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const IconAlert = ({ size = 24 }) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 
-function IconUser({ size = 18, color = '#1976D2' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="7" r="4" stroke={color} strokeWidth="1.6" />
-    </svg>
-  );
-}
-
-function IconClock({ size = 16, color = '#999' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.6" />
-      <path d="M12 7v6l4 2" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconCheck({ size = 16, color = '#fff' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 6L9 17l-5-5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconX({ size = 16, color = '#fff' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function IconInfo({ size = 16, color = '#1976D2' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.6" />
-      <path d="M12 10h.01M11 16h2" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
+// --- Sub-Components ---
 
 function StatusPill({ status }) {
   const s = (status || 'open').toLowerCase();
-  let bg = '#E3F2FD';
-  let color = '#0D47A1';
+  let statusClass = styles.statusOpen;
   let label = 'Open';
-  if (s === 'acknowledged') { bg = '#FFF8E1'; color = '#FF8F00'; label = 'Acknowledged'; }
-  if (s === 'closed') { bg = '#E8F5E9'; color = '#2E7D32'; label = 'Closed'; }
+  let icon = <IconFolderOpen size={12} />;
+
+  if (s === 'acknowledged') {
+    statusClass = styles.statusAcknowledged;
+    label = 'Acknowledged';
+    icon = <IconEye size={12} />;
+  } else if (s === 'closed') {
+    statusClass = styles.statusClosed;
+    label = 'Closed';
+    icon = <IconCheckCircle size={12} />;
+  } else if (s === 'reported') {
+    statusClass = styles.statusReported;
+    label = 'Reported';
+    icon = <IconFlag size={12} />;
+  }
+
   return (
-    <div style={{ display: 'inline-block', padding: '6px 10px', borderRadius: 999, background: bg, color, fontWeight: 800, fontSize: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.06)' }}>
-      {label}
+    <div className={`${styles.statusPill} ${statusClass}`}>
+      {icon}
+      <span>{label}</span>
     </div>
   );
 }
 
-function CircleNumber({ n, bg = '#1976D2', size = 44 }) {
-  const style = {
-    width: size,
-    height: size,
-    borderRadius: size / 2,
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#fff',
-    background: bg,
-    fontWeight: 800,
-    boxShadow: '0 3px 10px rgba(0,0,0,0.12)',
-    fontSize: 16,
-  };
-  return <div style={style}>{n}</div>;
-}
-
-function StatCard({ title, value, color, icon }) {
+function StatCard({ title, value, icon, color = '#1976D2' }) {
   return (
-    <div style={{ flex: 1, minWidth: 160, margin: 8, padding: 16, borderRadius: 12, background: '#fff', color: '#222', boxShadow: '0 6px 20px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
-      <div style={{ width: 56, height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <CircleNumber n={value} bg={color || '#1976D2'} />
+    <div className={styles.statCard}>
+      <div className={styles.statIcon} style={{ backgroundColor: color }}>
+        {icon}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 13, opacity: 0.85, fontWeight: 700 }}>{title}</div>
-        <div style={{ marginTop: 4, fontSize: 13, color: '#666', fontWeight: 700 }}>{icon}</div>
+      <div>
+        <div className={styles.statValue}>{value}</div>
+        <div className={styles.statTitle}>{title}</div>
       </div>
     </div>
   );
 }
 
-function Badge({ count }) {
-  let bg = '#f0f0f0';
-  if (count >= 3) bg = '#D32F2F';
-  else if (count === 2) bg = '#F57C00';
-  else if (count === 1) bg = '#FBC02D';
+function IncidentActions({ status, onAcknowledge, onClose, onToggleDetails, isOpen }) {
+  if (status === 'closed') {
+    return (
+      <div className={styles.closedBadge} title="Closed">
+        <IconCheck size={20} />
+      </div>
+    );
+  }
+
   return (
-    <span style={{ display: 'inline-block', padding: '6px 10px', borderRadius: 999, background: bg, color: '#fff', fontWeight: 600 }}>
-      {count}
-    </span>
+    <>
+      {status === 'open' && (
+        <button
+          type="button"
+          title="Acknowledge"
+          onClick={onAcknowledge}
+          className={`${styles.iconButton} ${styles.iconButtonAcknowledge}`}
+        >
+          <IconCheck />
+        </button>
+      )}
+      <button
+        type="button"
+        title="Close"
+        onClick={onClose}
+        className={`${styles.iconButton} ${styles.iconButtonClose}`}
+      >
+        <IconX />
+      </button>
+      <button
+        type="button"
+        title="Details"
+        onClick={onToggleDetails}
+        className={`${styles.iconButton} ${styles.iconButtonDetails} ${isOpen ? styles.iconButtonDetailsActive : ''
+          }`}
+      >
+        <IconInfo />
+      </button>
+    </>
   );
 }
+
+function DetailsPane({ incident }) {
+  return (
+    <div className={styles.detailsPane}>
+      <div className={styles.detailsTitle}>Full Description</div>
+      <p style={{ margin: 0 }}>{incident.description || '—'}</p>
+      {incident.attachments && incident.attachments.length > 0 && (
+        <div style={{ marginTop: 12 }}>
+          <div className={styles.detailsTitle}>Attachments</div>
+          <ul>
+            {incident.attachments.map(a => (
+              <li key={a.id}><a href={a.path} target="_blank" rel="noreferrer">{a.original_name || a.path}</a></li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportCountCircle({ count }) {
+  const countNum = count || 0;
+  let countClass = styles.reportCount;
+  if (countNum >= 3) {
+    countClass = `${styles.reportCount} ${styles.reportCountHigh}`;
+  } else if (countNum === 2) {
+    countClass = `${styles.reportCount} ${styles.reportCountMedium}`;
+  }
+
+  // Don't render a circle if count is 0
+  if (countNum === 0) return null;
+
+  return (
+    <div className={countClass} title={`${countNum} previous report(s)`}>
+      {countNum}
+    </div>
+  );
+}
+
+function UserReportCard({ incident, usersCache, onResolve, onToggleDetails, isOpen }) {
+  const status = incident.status || 'open';
+  return (
+    <div className={styles.card}>
+      <StatusPill status={status} />
+      <div className={styles.cardBody}>
+        <div className={styles.cardHeader}>
+          <div className={styles.cardTitle}>{incident.title}</div>
+          <div className={styles.cardMeta} style={{ alignItems: 'center' }}>
+            <IconClock />
+            <span>{timeAgo(incident.created_at)}</span>
+            <ReportCountCircle count={incident.report_count} />
+          </div>
+        </div>
+        <div className={styles.cardDescription}>
+          {incident.description?.slice(0, 160) || '—'}...
+        </div>
+      </div>
+      <div className={styles.cardFooter}>
+        <div className={styles.cardUser}>
+          <IconUser />
+          <strong>{usersCache[incident.reported_user_id] || `#${incident.reported_user_id}`}</strong>
+        </div>
+        <div className={styles.cardActions}>
+          <IncidentActions
+            status={status}
+            isOpen={isOpen}
+            onAcknowledge={() => onResolve(incident.id, 'acknowledged')}
+            onClose={() => onResolve(incident.id, 'closed')}
+            onToggleDetails={onToggleDetails}
+          />
+        </div>
+      </div>
+      {isOpen && <DetailsPane incident={incident} />}
+    </div>
+  );
+}
+
+function GeneralIncidentCard({ incident, onResolve, onToggleDetails, isOpen }) {
+  const status = incident.status || 'open';
+  return (
+    <div className={`${styles.card} ${styles.cardList} ${isOpen ? styles.detailsOpen : ''}`}>
+      <StatusPill status={status} />
+      <div className={styles.cardListSeverity}>
+        <div className={styles.severityLabel}>Severity</div>
+        <div className={styles.severityValue}>{incident.severity || 'N/A'}</div>
+      </div>
+      <div className={styles.cardListMain}>
+        <div className={styles.cardHeader} style={{ marginBottom: 4 }}>
+          <div className={styles.cardTitle}>{incident.title}</div>
+          <div className={styles.cardMeta}>
+            <IconClock /> <span>{timeAgo(incident.created_at)}</span>
+          </div>
+        </div>
+        <div className={styles.cardDescription} style={{ marginTop: 0 }}>
+          {incident.description?.slice(0, 200) || ''}...
+        </div>
+      </div>
+      <div className={`${styles.cardActions} ${styles.cardListActions}`}>
+        <IncidentActions
+          status={status}
+          isOpen={isOpen}
+          onAcknowledge={() => onResolve(incident.id, 'acknowledged')}
+          onClose={() => onResolve(incident.id, 'closed')}
+          onToggleDetails={onToggleDetails}
+        />
+      </div>
+      {isOpen && <DetailsPane incident={incident} className={styles.detailsPaneList} />}
+    </div>
+  );
+}
+
+// --- Skeleton Loader Components ---
+
+const SkeletonCard = () => (
+  <div className={styles.skeletonCard}>
+    <div className={styles.skeletonBody}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        {/* Title */}
+        <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '50%', height: 20 }} />
+        {/* Meta (Time + Circle) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: 50, height: 16 }} />
+          <div className={`${styles.skeletonAnimate}`} style={{ width: 32, height: 32, borderRadius: '50%' }} />
+        </div>
+      </div>
+      {/* Description */}
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '90%', marginBottom: 8 }} />
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '80%' }} />
+    </div>
+    <div className={styles.cardFooter} style={{ paddingTop: 24 }}>
+      {/* User */}
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '40%', height: 20 }} />
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div className={`${styles.skeletonAnimate}`} style={{ width: 40, height: 40, borderRadius: 10 }} />
+        <div className={`${styles.skeletonAnimate}`} style={{ width: 40, height: 40, borderRadius: 10 }} />
+      </div>
+    </div>
+  </div>
+);
+
+const SkeletonListCard = () => (
+  <div className={styles.skeletonListCard}>
+    <div style={{ width: 80, flexShrink: 0 }}>
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '70%', height: 12, margin: '0 auto 8px' }} />
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '50%', height: 20, margin: '0 auto' }} />
+    </div>
+    <div style={{ flexGrow: 1 }}>
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '50%', height: 20, marginBottom: 12 }} />
+      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '100%' }} />
+    </div>
+    <div style={{ width: 140, flexShrink: 0, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+      <div className={`${styles.skeletonAnimate}`} style={{ width: 40, height: 40, borderRadius: 10 }} />
+      <div className={`${styles.skeletonAnimate}`} style={{ width: 40, height: 40, borderRadius: 10 }} />
+    </div>
+  </div>
+);
+
+
+// --- Main Component ---
 
 export default function IncidentManagement() {
   const [incidents, setIncidents] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Set initial loading to true
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('open');
   const [usersCache, setUsersCache] = useState({});
-  const [hoveredId, setHoveredId] = useState(null);
   const [openIds, setOpenIds] = useState({});
 
-  // available tabs
+  // Tabs now include icons
   const tabs = [
-    { key: 'all', label: 'All' },
-    { key: 'open', label: 'Open' },
-    { key: 'acknowledged', label: 'Acknowledged' },
-    { key: 'closed', label: 'Closed' },
-    { key: 'reported', label: 'Reported' },
+    { key: 'all', label: 'All', icon: <IconList /> },
+    { key: 'open', label: 'Open', icon: <IconFolderOpen /> },
+    { key: 'acknowledged', label: 'Acknowledged', icon: <IconEye /> },
+    { key: 'closed', label: 'Closed', icon: <IconCheckCircle /> },
+    { key: 'reported', label: 'Reported', icon: <IconFlag /> },
   ];
 
   const counts = useMemo(() => {
-    const c = { all: incidents.length, open: 0, acknowledged: 0, closed: 0, reported: 0 };
+    const c = { all: 0, open: 0, acknowledged: 0, closed: 0, reported: 0 };
     for (const it of incidents) {
-      if (!it.status || it.status === 'open') c.open++;
-      else if (it.status === 'acknowledged') c.acknowledged++;
-      else if (it.status === 'closed') c.closed++;
-      if (it.status === 'reported') c.reported++;
+      c.all++;
+      const status = it.status || 'open';
+      if (c[status] !== undefined) {
+        c[status]++;
+      }
+      if (it.reported_user_id) {
+        c.reported++;
+      }
     }
     return c;
   }, [incidents]);
 
+  const stats = useMemo(() => {
+    return incidents.reduce((acc, it) => {
+      const severity = (it.severity || 'low').toLowerCase();
+      if (severity === 'high') acc.high++;
+      else if (severity === 'medium') acc.medium++;
+      else acc.low++;
+      return acc;
+    }, { high: 0, medium: 0, low: 0 });
+  }, [incidents]);
+
   useEffect(() => { loadIncidents(); }, []);
-  useEffect(() => {
-    console.info('IncidentManagement mounted');
-    try { console.info('Auth token present?', !!localStorage.getItem('authData') || !!sessionStorage.getItem('authData')); } catch (e) {}
-  }, []);
 
   const loadIncidents = async () => {
     setLoading(true);
@@ -172,7 +363,7 @@ export default function IncidentManagement() {
       const items = Array.isArray(payload) ? payload : (payload.data ?? payload);
       setIncidents(items || []);
 
-      // fetch reported users for caching
+      // fetch reported users
       const ids = Array.from(new Set((items || []).map(i => i.reported_user_id).filter(Boolean)));
       const missing = ids.filter(id => !usersCache[id]);
       await Promise.all(missing.map(async id => {
@@ -192,22 +383,22 @@ export default function IncidentManagement() {
     }
   };
 
-  const stats = useMemo(() => {
-    const total = incidents.length;
-    const reportedWithUser = incidents.filter(i => i.reported_user_id).length;
-    const bySeverity = incidents.reduce((acc, it) => { acc[it.severity] = (acc[it.severity] || 0) + 1; return acc; }, {});
-    return { total, reportedWithUser, bySeverity };
-  }, [incidents]);
-
   const filtered = useMemo(() => {
     let list = incidents;
     if (statusFilter && statusFilter !== 'all') {
-      // treat undefined status as 'open'
-      list = list.filter(i => (i.status || 'open') === statusFilter);
+      if (statusFilter === 'reported') {
+        list = list.filter(i => i.reported_user_id);
+      } else {
+        list = list.filter(i => (i.status || 'open') === statusFilter);
+      }
     }
     if (query) {
       const q = query.toLowerCase();
-      list = list.filter(i => (i.title || '').toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q) || ((i.meta && i.meta.reported_plate) || '').toLowerCase().includes(q));
+      list = list.filter(i =>
+        (i.title || '').toLowerCase().includes(q) ||
+        (i.description || '').toLowerCase().includes(q) ||
+        ((i.meta && i.meta.reported_plate) || '').toLowerCase().includes(q)
+      );
     }
     return list;
   }, [incidents, query, statusFilter]);
@@ -217,195 +408,121 @@ export default function IncidentManagement() {
 
   const resolveIncident = async (id, newStatus = 'acknowledged') => {
     if (!window.confirm(`Mark incident #${id} as ${newStatus}?`)) return;
-    console.log('resolveIncident called', { id, newStatus });
     setLoading(true);
     const now = new Date().toISOString();
     try {
-      // optimistic UI: update local state immediately so item moves tabs
+      // optimistic UI
       setIncidents(prev => prev.map(it => it.id === id ? { ...it, status: newStatus, resolved_at: now } : it));
-      console.log('optimistic update applied for', id);
-
-      console.log('sending patch to API', `/incidents/${id}`, { status: newStatus, resolved_at: now });
-      const res = await api.patch(`/incidents/${id}`, { status: newStatus, resolved_at: now });
-      console.log('patch response', res && res.status, res && res.data);
-      // ensure server state refreshed (in case other fields changed)
+      await api.patch(`/incidents/${id}`, { status: newStatus, resolved_at: now });
+      // Full reload to ensure sync
       await loadIncidents();
     } catch (e) {
       console.error('Failed to update incident', e);
       window.alert('Failed to update incident; see console');
-      // revert optimistic change by reloading
-      try { await loadIncidents(); } catch (_) {}
+      await loadIncidents(); // revert on error
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleDetails = (id) => {
+    setOpenIds(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
-    <div style={{ padding: 20 }}>
-      <div style={{ background: 'linear-gradient(90deg,#c34c4d,#e14b4b)', color: '#fff', padding: 24, borderRadius: 12, marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontWeight: 900, letterSpacing: '-0.5px' }}>Incident Dashboard</h1>
-        <div style={{ marginTop: 8, opacity: 0.95, fontWeight: 700 }}>Overview of incidents and reports</div>
+    <div className={styles.container}>
+      <header className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Incident Dashboard</h1>
+        <div className={styles.pageSubtitle}>Overview of all reported incidents and user reports</div>
+      </header>
+
+      <div className={styles.statsRow}>
+        <StatCard title="High Severity" value={stats.high} color="#D32F2F" icon={<IconAlert size={20} />} />
+        <StatCard title="Medium Severity" value={stats.medium} color="#F57C00" icon={<IconAlert size={20} />} />
+        <StatCard title="Low Severity" value={stats.low} color="#1976D2" icon={<IconAlert size={20} />} />
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 12, alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className={styles.controlsRow}>
+        <nav className={styles.tabsNav}>
           {tabs.map(t => (
-            <button type="button" key={t.key} onClick={() => setStatusFilter(t.key)} style={{ padding: '8px 12px', borderRadius: 10, border: statusFilter === t.key ? '2px solid #1976D2' : '1px solid #eee', background: statusFilter === t.key ? '#eef6ff' : '#fff', fontWeight: 800, cursor: 'pointer' }}>
-              {t.label} <span style={{ marginLeft: 8, fontWeight: 900 }}>{counts[t.key] ?? 0}</span>
+            <button
+              type="button"
+              key={t.key}
+              onClick={() => setStatusFilter(t.key)}
+              className={`${styles.tabButton} ${statusFilter === t.key ? styles.tabButtonActive : ''}`}
+            >
+              {t.icon}
+              <span>{t.label}</span>
+              {/* Show count only if not loading */}
+              {!loading && <span className={styles.tabCount}>{counts[t.key] ?? 0}</span>}
             </button>
           ))}
+        </nav>
+        <div className={styles.searchWrapper}>
+          <input
+            placeholder="Search by title, description, or plate..."
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className={styles.searchInput}
+          />
+          <div className={styles.searchInputIcon}>
+            <IconSearch />
+          </div>
         </div>
-
-        <div style={{ flex: 1 }} />
-
-        <StatCard title="Total incidents" value={stats.total} color="#424242" icon={<IconUser/>} />
-        <StatCard title="User Reports" value={stats.reportedWithUser} color="#1976D2" icon={<IconUser/>} />
+        <button onClick={loadIncidents} className={styles.refreshButton}>
+          Refresh
+        </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
-        <div style={{ position: 'relative', flex: 1 }}>
-          <input placeholder="Search title, description" value={query} onChange={e => setQuery(e.target.value)} style={{ width: '100%', padding: '10px 12px 10px 42px', borderRadius: 10, border: '1px solid #eee', boxShadow: '0 4px 18px rgba(0,0,0,0.04)' }} />
-          <div style={{ position: 'absolute', left: 12, top: 8 }}><IconSearch color="#999" /></div>
-        </div>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ padding: 10, borderRadius: 8 }}>
-          <option value="all">All status</option>
-          <option value="open">Open</option>
-          <option value="acknowledged">Acknowledged</option>
-          <option value="closed">Closed</option>
-          <option value="reported">Reported</option>
-        </select>
-        <button onClick={loadIncidents} style={{ padding: '10px 16px', borderRadius: 8, background: '#C34C4D', color: '#fff', border: 'none', boxShadow: '0 6px 18px rgba(195,76,77,0.18)' }}>Refresh</button>
-      </div>
-
-      <section style={{ marginBottom: 28 }}>
-        <h3 style={{ fontWeight: 800 }}>User Reports</h3>
-        {userReports.length === 0 ? <div style={{ padding: 12, color: '#666' }}>No reports linked to users.</div> : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px,1fr))', gap: 14 }}>
-            {userReports.map(it => {
-              const isOpen = !!openIds[it.id];
-              const status = (it.status || 'open');
-              // card background by status
-              let cardBg = '#fff';
-              if (status === 'acknowledged') cardBg = '#FFF8E1'; // light amber
-              if (status === 'closed') cardBg = '#F4F6F8'; // muted grey
-              return (
-                <div key={it.id} onMouseEnter={() => setHoveredId(it.id)} onMouseLeave={() => setHoveredId(null)} style={{ position: 'relative', background: cardBg, padding: 16, borderRadius: 12, boxShadow: hoveredId === it.id ? '0 12px 30px rgba(0,0,0,0.12)' : '0 6px 18px rgba(0,0,0,0.06)', transition: 'transform 160ms ease, box-shadow 160ms ease', transform: hoveredId === it.id ? 'translateY(-4px)' : 'none' }}>
-                  <div style={{ position: 'absolute', left: 12, top: -10 }}><StatusPill status={status} /></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontWeight: 900 }}>{it.title}</div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <div style={{ fontSize: 12, color: '#999', display: 'flex', alignItems: 'center', gap: 8 }}><IconClock /> <span style={{ fontWeight: 700 }}>{timeAgo(it.created_at)}</span></div>
-                      <div><CircleNumber n={it.report_count ?? 0} bg={it.report_count >= 3 ? '#D32F2F' : it.report_count === 2 ? '#F57C00' : '#1976D2'} size={40} /></div>
-                    </div>
-                  </div>
-                  <div style={{ marginTop: 8, color: '#555', fontWeight: 700 }}>{it.description?.slice(0,160) || '—'}</div>
-                  <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ fontSize: 13, color: '#666' }}><IconUser /> <strong style={{ marginLeft: 8 }}>{usersCache[it.reported_user_id] || `#${it.reported_user_id}`}</strong></div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      {/* Actions: Open -> Acknowledge + Close + Details; Acknowledged -> Close + Details; Closed -> no buttons, show green check */}
-                      {status !== 'closed' ? (
-                        <>
-                          {status === 'open' && (
-                            <button type="button" title="Acknowledge" onClick={() => resolveIncident(it.id, 'acknowledged')} style={{ width: 40, height: 40, borderRadius: 10, border: 'none', background: '#1976D2', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                              <IconCheck />
-                            </button>
-                          )}
-                          <button type="button" title="Close" onClick={() => resolveIncident(it.id, 'closed')} style={{ width: 40, height: 40, borderRadius: 10, border: 'none', background: '#D32F2F', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                            <IconX />
-                          </button>
-                          <button type="button" title="Details" onClick={() => setOpenIds(prev => ({ ...prev, [it.id]: !prev[it.id] }))} style={{ width: 40, height: 40, borderRadius: 10, border: '1px solid #eee', background: isOpen ? '#f7f7f7' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                            <IconInfo />
-                          </button>
-                        </>
-                      ) : (
-                        <div style={{ width: 40, height: 40, borderRadius: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: 18, background: '#2E7D32', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Closed">
-                            <IconCheck color="#fff" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {isOpen && (
-                    <div style={{ marginTop: 12, padding: 12, borderRadius: 8, background: '#fafafa', color: '#444' }}>
-                      <div style={{ fontWeight: 800, marginBottom: 6 }}>Full description</div>
-                      <div style={{ color: '#444' }}>{it.description || '—'}</div>
-                      {it.attachments && it.attachments.length > 0 && (
-                        <div style={{ marginTop: 8 }}>
-                          <div style={{ fontWeight: 800 }}>Attachments</div>
-                          <ul>
-                            {it.attachments.map(a => (<li key={a.id}><a href={a.path} target="_blank" rel="noreferrer">{a.original_name || a.path}</a></li>))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+      <section>
+        <h3 className={styles.sectionTitle}>User Reports</h3>
+        {loading ? (
+          // Skeleton loader for grid
+          <div className={styles.incidentGrid}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+        ) : userReports.length === 0 ? (
+          <div className={styles.noItems}>No user reports match your filter.</div>
+        ) : (
+          <div className={styles.incidentGrid}>
+            {userReports.map(it => (
+              <UserReportCard
+                key={it.id}
+                incident={it}
+                usersCache={usersCache}
+                onResolve={resolveIncident}
+                onToggleDetails={() => toggleDetails(it.id)}
+                isOpen={!!openIds[it.id]}
+              />
+            ))}
           </div>
         )}
       </section>
 
       <section>
-        <h3 style={{ fontWeight: 800 }}>General Incidents</h3>
-        {normalIncidents.length === 0 ? <div style={{ padding: 12, color: '#666' }}>No incidents.</div> : (
-          <div style={{ display: 'grid', gap: 12 }}>
-            {normalIncidents.map(it => {
-              const isOpen = !!openIds[it.id];
-              const status = (it.status || 'open');
-              let cardBg = '#fff';
-              if (status === 'acknowledged') cardBg = '#FFF8E1';
-              if (status === 'closed') cardBg = '#F4F6F8';
-              return (
-                <div key={it.id} onMouseEnter={() => setHoveredId(it.id)} onMouseLeave={() => setHoveredId(null)} style={{ position: 'relative', display: 'flex', gap: 12, background: cardBg, padding: 14, borderRadius: 12, alignItems: 'center', boxShadow: hoveredId === it.id ? '0 12px 30px rgba(0,0,0,0.12)' : '0 6px 18px rgba(0,0,0,0.06)', transition: 'transform 160ms ease, box-shadow 160ms ease', transform: hoveredId === it.id ? 'translateY(-4px)' : 'none' }}>
-                  <div style={{ position: 'absolute', left: 12, top: -10 }}><StatusPill status={status} /></div>
-                  <div style={{ width: 78, textAlign: 'center' }}>
-                    <div style={{ fontSize: 13, color: '#999', fontWeight: 800 }}>Severity</div>
-                    <div style={{ marginTop: 6, fontWeight: 900 }}>{it.severity}</div>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 900 }}>{it.title}</div>
-                    <div style={{ color: '#555', marginTop: 6, fontWeight: 700 }}>{it.description?.slice(0,200) || ''}</div>
-                      <div style={{ marginTop: 10, fontSize: 13, color: '#777', display: 'flex', justifyContent: 'flex-end' }}>
-                        <div style={{ color: '#666', display: 'flex', gap: 8, alignItems: 'center' }}><IconClock /> <span style={{ fontWeight: 700 }}>{timeAgo(it.created_at)}</span></div>
-                      </div>
-                  </div>
-                  <div style={{ width: 160, textAlign: 'right' }}>
-                    <div style={{ marginBottom: 8 }} />
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
-                      {status !== 'closed' ? (
-                        <>
-                          {status === 'open' && (
-                            <button type="button" title="Acknowledge" onClick={() => resolveIncident(it.id, 'acknowledged')} style={{ width: 40, height: 40, borderRadius: 10, border: 'none', background: '#1976D2', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                              <IconCheck />
-                            </button>
-                          )}
-                          <button type="button" title="Close" onClick={() => resolveIncident(it.id, 'closed')} style={{ width: 40, height: 40, borderRadius: 10, border: 'none', background: '#D32F2F', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                            <IconX />
-                          </button>
-                          <button type="button" title="Details" onClick={() => setOpenIds(prev => ({ ...prev, [it.id]: !prev[it.id] }))} style={{ width: 40, height: 40, borderRadius: 10, border: '1px solid #eee', background: isOpen ? '#f7f7f7' : '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                            <IconInfo />
-                          </button>
-                        </>
-                      ) : (
-                        <div style={{ width: 40, height: 40, borderRadius: 10, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
-                          <div style={{ width: 36, height: 36, borderRadius: 18, background: '#2E7D32', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} title="Closed">
-                            <IconCheck color="#fff" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {isOpen && (
-                    <div style={{ width: '100%', marginTop: 12, padding: 12, borderRadius: 8, background: '#fafafa', color: '#444' }}>
-                      <div style={{ fontWeight: 800, marginBottom: 6 }}>Full description</div>
-                      <div style={{ color: '#444' }}>{it.description || '—'}</div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+        <h3 className={styles.sectionTitle}>General Incidents</h3>
+        {loading ? (
+          // Skeleton loader for list
+          <div className={styles.incidentList}>
+            <SkeletonListCard />
+            <SkeletonListCard />
+            <SkeletonListCard />
+          </div>
+        ) : normalIncidents.length === 0 ? (
+          <div className={styles.noItems}>No general incidents match your filter.</div>
+        ) : (
+          <div className={styles.incidentList}>
+            {normalIncidents.map(it => (
+              <GeneralIncidentCard
+                key={it.id}
+                incident={it}
+                onResolve={resolveIncident}
+                onToggleDetails={() => toggleDetails(it.id)}
+                isOpen={!!openIds[it.id]}
+              />
+            ))}
           </div>
         )}
       </section>

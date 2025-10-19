@@ -47,7 +47,7 @@ main {
 }
 
 .user-name {
-  color: #cc4444;
+  color: #cc4444 !important;
 }
 
 .current-date {
