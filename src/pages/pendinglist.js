@@ -3,7 +3,7 @@ import 'assets/pendinglist.css';
 // 1. Import Link from react-router-dom
 import { FaFilePdf, FaCheck, FaEye, FaUserGraduate, FaUserTie, FaUserCog, FaUsers, FaTimes } from 'react-icons/fa';
 import { useNavigate, Link } from 'react-router-dom';
-import api, { API_BASE_URL } from '../utils/api';
+import api, { API_BASE_URL, getImageUrl } from '../utils/api';
 import { useAlert } from 'context/AlertContext';
 
 export default function PendingList() {
@@ -14,6 +14,44 @@ export default function PendingList() {
   const [sort, setSort] = useState('newest');
   const [activeRole, setActiveRole] = useState('Student');
   const [detailUser, setDetailUser] = useState(null);
+  // When a user's detail modal opens, aggressively log and attempt to fetch any
+  // file candidates so we can see in the console exactly what paths exist and
+  // whether a network fetch is performed for id1_path / deed_path etc.
+  useEffect(() => {
+    if (!detailUser) return;
+    (async () => {
+      try {
+        console.log('[PendingList] detailUser opened', detailUser);
+        const keys = ['or_path','cr_path','deed_path','id1_path','id2_path'];
+        for (const key of keys) {
+          // gather raw candidate values from multiple possible shapes
+          const raw = (detailUser && (detailUser[key] || detailUser.user_details?.[key] || detailUser.userDetail?.[key] || detailUser.user_detail?.[key])) || null;
+          const normalized = getFilePath(detailUser, key);
+          console.log('[PendingList] candidate', { key, raw, normalized });
+          if (!raw && !normalized) {
+            console.log('[PendingList] candidate missing, skipping fetch for', key);
+            continue;
+          }
+          // choose the value to try fetching (prefer normalized path)
+          const candidate = normalized || raw;
+          const url = normalizeToApiImageUrl(candidate);
+          console.log('[PendingList] attempting fetch for', { key, candidate, url });
+          try {
+            const res = await fetch(url, { credentials: 'include' });
+            console.log('[PendingList] fetch result', { key, ok: res.ok, status: res.status, statusText: res.statusText });
+            if (res.ok) {
+              const ct = res.headers && typeof res.headers.get === 'function' ? res.headers.get('content-type') : null;
+              console.log('[PendingList] fetch successful headers', { key, contentType: ct });
+            }
+          } catch (e) {
+            console.error('[PendingList] fetch exception for candidate', { key, candidate, error: e });
+          }
+        }
+      } catch (e) {
+        console.error('[PendingList] detailUser prefetch runner failed', e);
+      }
+    })();
+  }, [detailUser]);
 
   // State for Reject modal
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
@@ -31,6 +69,51 @@ export default function PendingList() {
   const goToUserList = () => {
     navigate('/home/userlist'); 
   };
+
+  // Open the detail modal but first fetch the canonical user object (with userDetail)
+  async function openDetail(user) {
+    if (!user || !user.id) return;
+    console.log('[PendingList] openDetail - fetching full user', user.id);
+    try {
+      let response;
+      try {
+        response = await api.get(`/users/${user.id}`);
+        console.log('[PendingList] openDetail - api.get /users/{id}', { status: response.status });
+      } catch (err) {
+        console.log('[PendingList] openDetail - api.get failed, trying absolute origin', err?.message || err);
+        const origin = API_BASE_URL.replace(/\/$/, '');
+        const url = `${origin}/api/users/${user.id}`;
+        const fres = await fetch(url, { credentials: 'include' });
+        const text = await fres.text();
+        try { response = { data: JSON.parse(text), status: fres.status }; } catch (_) { throw new Error(`Open detail: non-JSON response (${fres.status})`); }
+      }
+
+      const json = response.data;
+      const body = json?.data || json;
+      console.log('[PendingList] openDetail - fetched body', body);
+      // Merge fetched body with the original list row so we don't lose top-level
+      // fields (contact_number, or_path, etc.) the table had.
+      const merged = { ...(user || {}), ...(body || {}) };
+      // Prefer to expose a normalized nested userDetail for backward compat
+      const ud = body?.userDetail || body?.user_details || body?.user_detail || merged.userDetail || merged.user_details || merged.user_detail || null;
+      if (ud) {
+        // Ensure some commonly-used top-level fields exist (fall back to nested values)
+        ['contact_number','department','plate_number','from_pending','or_path','cr_path','id1_path','id2_path','deed_path'].forEach(k => {
+          if ((merged[k] === undefined || merged[k] === null || merged[k] === '') && ud[k] !== undefined && ud[k] !== null) {
+            merged[k] = ud[k];
+          }
+        });
+        // keep nested userDetail available
+        merged.userDetail = ud;
+      }
+
+      setDetailUser(merged);
+    } catch (e) {
+      console.error('[PendingList] openDetail failed', e);
+      // fallback to using the provided user object so modal still opens
+      setDetailUser(user);
+    }
+  }
 
   const roleIcons = {
     Student: <FaUserGraduate />,
@@ -77,10 +160,143 @@ export default function PendingList() {
   const roleCount = { Student: 0, Faculty: 0, Personnel: 0 };
   users.forEach(u => { const pos = u.position || u.role || (u.position === null ? 'Student' : 'Student'); if (roleCount[pos] !== undefined) roleCount[pos]++; });
   const filtered = users.filter(u => (u.position || u.role || 'Student') === activeRole && ((u.name || '').toLowerCase().includes(search.toLowerCase()) || (u.email || '').toLowerCase().includes(search.toLowerCase())));
-  function previewFile(path) {
-    if (!path) return;
-    const url = `/api/image/${encodeURIComponent(path)}`;
-    window.open(url, '_blank');
+  async function previewFile(path) {
+    // Intensive logging: always print the incoming path and its raw type
+      console.log('[PendingList] previewFile called', { path });
+    if (!path) {
+      console.debug('[PendingList] previewFile - empty path, aborting');
+      return;
+    }
+    // guard against stored boolean false or '0' values
+    const s = String(path).trim();
+    console.debug('[PendingList] previewFile - normalized string', { s });
+      console.log('[PendingList] previewFile - normalized string', { s });
+    if (!s || s === '0' || s.toLowerCase() === 'false') {
+      console.debug('[PendingList] previewFile - path is falsy after normalization, aborting', { s });
+      return;
+    }
+    // Keep slashes in the path so backend route with wildcard can resolve storage path
+    const clean = s.startsWith('/') ? s.slice(1) : s;
+    const url = getImageUrl(clean);
+    console.debug('[PendingList] previewFile - clean and url', { clean, url });
+    console.log('[PendingList] previewFile - clean and url', { clean, url });
+
+    try {
+      // Try to fetch the file and open as a blob so images and PDFs render in a new tab
+      console.debug('[PendingList] previewFile - fetching', { url });
+    console.log('[PendingList] previewFile - fetching', { url });
+      const res = await fetch(url, { credentials: 'include' });
+      console.debug('[PendingList] previewFile - fetch response', { ok: res.ok, status: res.status, statusText: res.statusText, headers: res.headers && typeof res.headers.get === 'function' ? { 'content-type': res.headers.get('content-type') } : null });
+        console.log('[PendingList] previewFile - fetch response', { ok: res.ok, status: res.status, statusText: res.statusText, headers: res.headers && typeof res.headers.get === 'function' ? { 'content-type': res.headers.get('content-type') } : null });
+      if (!res.ok) {
+        showAlert(`Preview failed: ${res.status} ${res.statusText}`, 'error');
+        // as a fallback attempt to open the direct URL in a new tab
+        console.debug('[PendingList] previewFile - opening fallback url in new tab', { url });
+          console.log('[PendingList] previewFile - opening fallback url in new tab', { url });
+        window.open(url, '_blank');
+        return;
+      }
+
+      const blob = await res.blob();
+      console.debug('[PendingList] previewFile - blob obtained', { size: blob.size, type: blob.type });
+        console.log('[PendingList] previewFile - blob obtained', { size: blob.size, type: blob.type });
+      const blobUrl = URL.createObjectURL(blob);
+      // Open the blob in a new tab/window
+      window.open(blobUrl, '_blank');
+      // optional: revokeObjectURL after a delay to allow the browser to load it
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 1000);
+    } catch (e) {
+        console.error('[PendingList] previewFile - fetch exception, falling back to direct open', e, { url });
+      // Fallback: open backend URL directly (may work if CORS/proxy allows)
+      try { window.open(url, '_blank'); } catch (ow) { console.error('[PendingList] previewFile - fallback window.open failed', ow); }
+    }
+  }
+
+  // Normalize file path location: try top-level then user_details, and ignore false/'0' placeholders
+  function getFilePath(user, key) {
+    if (!user) return null;
+    let candidate = null;
+    // Try a few common shapes: top-level, nested under user_details, userDetail, or user_detail
+    if (user[key] !== undefined && user[key] !== null) candidate = user[key];
+    if ((candidate === null || candidate === undefined) && user.user_details) {
+      candidate = user.user_details[key];
+    }
+    if ((candidate === null || candidate === undefined) && user.userDetail) {
+      candidate = user.userDetail[key];
+    }
+    if ((candidate === null || candidate === undefined) && user.user_detail) {
+      candidate = user.user_detail[key];
+    }
+    if (candidate === undefined || candidate === null) return null;
+    // reject boolean false and numeric/string '0'
+    if (candidate === false) return null;
+    let s = String(candidate || '').trim();
+    if (!s || s === '0' || s.toLowerCase() === 'false') return null;
+
+    // Normalize Windows backslashes to forward slashes
+    s = s.replace(/\\/g, '/');
+
+    // If stored as a file:// URL, strip the scheme
+    if (s.startsWith('file://')) {
+      // file:///C:/path/to/storage/app/public/or_cr/...
+      s = s.replace(/^file:\/\//i, '');
+    }
+
+    // If the stored path contains the storage/app/public prefix, extract the relative part
+    const storageMarker = '/storage/app/public/';
+    const publicMarker = '/public/';
+    if (s.includes(storageMarker)) {
+      s = s.substring(s.indexOf(storageMarker) + storageMarker.length);
+    } else if (s.includes('/storage/')) {
+      // fallback: find 'storage/' and strip up to 'public/' if present
+      const idx = s.indexOf('/storage/');
+      s = s.substring(idx + '/storage/'.length);
+      if (s.startsWith('app/public/')) s = s.substring('app/public/'.length);
+    } else if (s.includes(publicMarker)) {
+      // path may include '.../public/or_cr/...'
+      s = s.substring(s.indexOf(publicMarker) + publicMarker.length);
+    }
+
+    // Trim any leading slashes and whitespace
+    s = s.replace(/^\/+/, '').trim();
+
+    if (!s) return null;
+    // final sanity check: avoid storing absolute drive letters
+    if (/^[A-Za-z]:\//.test(s)) return null;
+    return s;
+  }
+
+  // Accept backend-returned asset URLs (/storage/...) and convert them to the
+  // API image endpoint URL so the preview fetch uses FileController which reads
+  // directly from storage/app/public. Accepts both relative paths and full URLs.
+  function normalizeToApiImageUrl(candidate) {
+    if (!candidate) return '';
+    let s = String(candidate).trim();
+    if (!s) return '';
+
+    // If it's a full http(s) URL and contains '/storage/', convert to API image
+    try {
+      if (/^https?:\/\//i.test(s)) {
+        const urlObj = new URL(s);
+        const storageIndex = urlObj.pathname.indexOf('/storage/');
+        if (storageIndex >= 0) {
+          const rel = urlObj.pathname.substring(storageIndex + '/storage/'.length) + (urlObj.hash || '');
+          return `${API_BASE_URL.replace(/\/$/, '')}/api/image/${rel.replace(/^\/+/, '')}`;
+        }
+        // otherwise return full URL as-is
+        return s;
+      }
+    } catch (e) {
+      // ignore URL parse errors and fall through
+    }
+
+    // If it's already a relative path (possibly starting with 'storage/' or 'public/'), strip known prefixes
+    s = s.replace(/^\/+/, '');
+    if (s.startsWith('storage/')) s = s.substring('storage/'.length);
+    if (s.startsWith('app/public/')) s = s.substring('app/public/'.length);
+    if (s.startsWith('public/')) s = s.substring('public/'.length);
+
+    return `${API_BASE_URL.replace(/\/$/, '')}/api/image/${s}`;
   }
 
   function handleApproveClick(user) {
@@ -249,7 +465,7 @@ export default function PendingList() {
         <div className="right-actions">
           <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="newest">Newest to Oldest</option>
+            <option value="newest">Newest TO Oldest</option>
             <option value="oldest">Oldest to Newest</option>
           </select>
         </div>
@@ -277,7 +493,7 @@ export default function PendingList() {
               <td>{u.contact_number || '—'}</td>
               <td>{u.department || '—'}</td>
               <td>{u.position || u.role || '—'}</td>
-              <td><button onClick={() => setDetailUser(u)} className="pdf-link"><FaEye /> View</button></td>
+              <td><button onClick={() => { console.log('[PendingList] open detail for user', u); openDetail(u); }} className="pdf-link"><FaEye /> View</button></td>
               
               <td className="action-icons">
                 <button className="approve" title="Approve" onClick={() => handleApproveClick(u)}><FaCheck /></button>
@@ -316,16 +532,81 @@ export default function PendingList() {
               </div>
               
               <div className="modal-files">
-                {detailUser.or_path ? (
-                  <button className="modal-button modal-button-secondary" onClick={() => previewFile(detailUser.or_path)}>
-                    <FaFilePdf /> Preview OR
-                  </button>
+                {getFilePath(detailUser, 'or_path') ? (
+                  <div className="file-row">
+                    <button className="modal-button modal-button-secondary" onClick={() => { const p = getFilePath(detailUser, 'or_path'); console.debug('[PendingList] Preview OR clicked', { p, detailUser }); previewFile(p); }}>
+                      <FaFilePdf /> Preview OR
+                    </button>
+                  </div>
                 ) : null}
-                {detailUser.cr_path ? (
-                  <button className="modal-button modal-button-secondary" onClick={() => previewFile(detailUser.cr_path)}>
-                    <FaFilePdf /> Preview CR
-                  </button>
+
+                {getFilePath(detailUser, 'cr_path') ? (
+                  <div className="file-row">
+                    <button className="modal-button modal-button-secondary" onClick={() => { const p = getFilePath(detailUser, 'cr_path'); console.debug('[PendingList] Preview CR clicked', { p, detailUser }); previewFile(p); }}>
+                      <FaFilePdf /> Preview CR
+                    </button>
+                  </div>
                 ) : null}
+
+                <div className="file-row">
+                  <button
+                    className="modal-button modal-button-secondary"
+                    onClick={() => {
+                      const key = 'deed_path';
+                      const p = getFilePath(detailUser, key);
+                      console.log('[PendingList] Preview Deed clicked', { key, normalized: p, detailUser });
+                      if (p) return previewFile(p);
+                      // fallback: try raw candidates and log for debugging
+                      const raw = (detailUser && (detailUser[key] || detailUser.user_details?.[key] || detailUser.userDetail?.[key] || detailUser.user_detail?.[key])) || null;
+                      console.log('[PendingList] deed preview fallback', { key, normalized: p, raw, detailUser });
+                      if (raw) {
+                        const url = normalizeToApiImageUrl(raw);
+                        console.log('[PendingList] deed preview fallback - opening raw->api url', { raw, url });
+                        window.open(url, '_blank');
+                        return;
+                      }
+                      showAlert('No deed file available for this user', 'info');
+                    }}
+                  >
+                    <FaFilePdf /> Preview Deed
+                  </button>
+                </div>
+
+                <div className="file-row">
+                  <button
+                    className="modal-button modal-button-secondary"
+                    onClick={() => {
+                      const key = 'id1_path';
+                      const p = getFilePath(detailUser, key);
+                      console.log('[PendingList] Preview ID1 clicked', { key, normalized: p, detailUser });
+                      if (p) return previewFile(p);
+                      const raw = (detailUser && (detailUser[key] || detailUser.user_details?.[key] || detailUser.userDetail?.[key] || detailUser.user_detail?.[key])) || null;
+                      console.log('[PendingList] id1 preview fallback', { key, normalized: p, raw, detailUser });
+                      if (raw) { const url = normalizeToApiImageUrl(raw); console.log('[PendingList] id1 preview fallback - opening', { raw, url }); window.open(url, '_blank'); return; }
+                      showAlert('No ID 1 file available for this user', 'info');
+                    }}
+                  >
+                    <FaFilePdf /> Preview ID 1
+                  </button>
+                </div>
+
+                <div className="file-row">
+                  <button
+                    className="modal-button modal-button-secondary"
+                    onClick={() => {
+                      const key = 'id2_path';
+                      const p = getFilePath(detailUser, key);
+                      console.log('[PendingList] Preview ID2 clicked', { key, normalized: p, detailUser });
+                      if (p) return previewFile(p);
+                      const raw = (detailUser && (detailUser[key] || detailUser.user_details?.[key] || detailUser.userDetail?.[key] || detailUser.user_detail?.[key])) || null;
+                      console.log('[PendingList] id2 preview fallback', { key, normalized: p, raw, detailUser });
+                      if (raw) { const url = normalizeToApiImageUrl(raw); console.log('[PendingList] id2 preview fallback - opening', { raw, url }); window.open(url, '_blank'); return; }
+                      showAlert('No ID 2 file available for this user', 'info');
+                    }}
+                  >
+                    <FaFilePdf /> Preview ID 2
+                  </button>
+                </div>
               </div>
             </div>
 

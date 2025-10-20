@@ -34,7 +34,7 @@ const MainRoutes = () => {
                     <Route path="userlist" element={<UserList />} />
                     <Route path="admin/create-user" element={<AdminCreateUser />} />
                     <Route path="editparkingspace" element={<EditParking />} />
-                    <Route path="messages" element={<Messages />} />
+                    <Route path="messages/:conversationId?" element={<Messages />} />
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="feedback" element={<FeedbackPage />} />
                     <Route path="incidents" element={<IncidentManagement />} />

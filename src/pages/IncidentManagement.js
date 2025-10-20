@@ -232,10 +232,9 @@ function GeneralIncidentCard({ incident, onResolve, onToggleDetails, isOpen }) {
   return (
     <div className={`${styles.card} ${styles.cardList} ${isOpen ? styles.detailsOpen : ''}`}>
       <StatusPill status={status} />
-      <div className={styles.cardListSeverity}>
-        <div className={styles.severityLabel}>Severity</div>
-        <div className={styles.severityValue}>{incident.severity || 'N/A'}</div>
-      </div>
+      
+      {/* --- SEVERITY BLOCK REMOVED --- */}
+
       <div className={styles.cardListMain}>
         <div className={styles.cardHeader} style={{ marginBottom: 4 }}>
           <div className={styles.cardTitle}>{incident.title}</div>
@@ -293,11 +292,8 @@ const SkeletonCard = () => (
 
 const SkeletonListCard = () => (
   <div className={styles.skeletonListCard}>
-    <div style={{ width: 80, flexShrink: 0 }}>
-      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '70%', height: 12, margin: '0 auto 8px' }} />
-      <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '50%', height: 20, margin: '0 auto' }} />
-    </div>
-    <div style={{ flexGrow: 1 }}>
+    {/* SEVERITY SKELETON REMOVED */}
+    <div style={{ flexGrow: 1, paddingLeft: '20px' }}> {/* Added padding to compensate for removed block */}
       <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '50%', height: 20, marginBottom: 12 }} />
       <div className={`${styles.skeletonAnimate} ${styles.skeletonBar}`} style={{ width: '100%' }} />
     </div>
@@ -343,15 +339,7 @@ export default function IncidentManagement() {
     return c;
   }, [incidents]);
 
-  const stats = useMemo(() => {
-    return incidents.reduce((acc, it) => {
-      const severity = (it.severity || 'low').toLowerCase();
-      if (severity === 'high') acc.high++;
-      else if (severity === 'medium') acc.medium++;
-      else acc.low++;
-      return acc;
-    }, { high: 0, medium: 0, low: 0 });
-  }, [incidents]);
+  // --- SEVERITY STATS (stats variable) REMOVED ---
 
   useEffect(() => { loadIncidents(); }, []);
 
@@ -436,10 +424,11 @@ export default function IncidentManagement() {
         <div className={styles.pageSubtitle}>Overview of all reported incidents and user reports</div>
       </header>
 
+      {/* --- STATS ROW UPDATED --- */}
       <div className={styles.statsRow}>
-        <StatCard title="High Severity" value={stats.high} color="#D32F2F" icon={<IconAlert size={20} />} />
-        <StatCard title="Medium Severity" value={stats.medium} color="#F57C00" icon={<IconAlert size={20} />} />
-        <StatCard title="Low Severity" value={stats.low} color="#1976D2" icon={<IconAlert size={20} />} />
+        <StatCard title="Total Incidents" value={counts.all} color="#1976D2" icon={<IconList size={20} />} />
+        <StatCard title="Open Incidents" value={counts.open} color="#F57C00" icon={<IconFolderOpen size={20} />} />
+        <StatCard title="User Reports" value={counts.reported} color="#D32F2F" icon={<IconFlag size={20} />} />
       </div>
 
       <div className={styles.controlsRow}>

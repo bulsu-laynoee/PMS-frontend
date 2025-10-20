@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import api from '../utils/api';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { getUserEmail } from '../utils/auth';
 import '../services/echo';
 
@@ -44,12 +45,13 @@ const UserAvatar = ({ name }) => {
 
 export default function Messages() {
   // Notes: realtime improvements and search enhancements
-  // - Subscribes to conversation.{id} channels so sidebar and open convo update live
+  // - Subscribes to `conversation.{id}` channels so sidebar and open convo update live
   // - Search now matches participant names and emails, plus conversation title/name
   const [conversations, setConversations] = useState([]);
   const [activeConv, setActiveConv] = useState(null);
   const [messageText, setMessageText] = useState('');
   const [query, setQuery] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
   const echoSubscription = useRef(null);
@@ -57,6 +59,9 @@ export default function Messages() {
   const lastAutoOpenRef = useRef({ id: null, ts: 0 });
   const activeConvRef = useRef(null);
   const conversationsRef = useRef([]);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useParams();
 
   // Reliable global current user detection (many fallbacks)
   const globalCurrentUser = typeof window !== 'undefined'
@@ -77,10 +82,50 @@ export default function Messages() {
     }
   };
 
+  // If URL contains a conversation or user query param, open that conversation
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search || '');
+    const convId = sp.get('conversation') || sp.get('conversation_id') || sp.get('conv') || sp.get('id') || params.conversationId;
+    const userId = sp.get('user');
+    if (!convId && !userId) return;
+
+    if (convId) {
+      // If the conversation is already in the list, open it; otherwise try to fetch it by id
+      const existing = (conversations || []).find(c => String(c.id) === String(convId));
+      if (existing) {
+        openConversation(existing).catch(() => {});
+      } else {
+        openConversation({ id: convId }).catch(() => {});
+      }
+      // keep the conversation id in the URL so links are shareable
+      return;
+    }
+
+    if (userId) {
+      (async () => {
+        try {
+          const res = await api.post('/conversations', { user_ids: [Number(userId)] });
+          const conv = res.data.data || res.data || null;
+          const convObj = conv && (conv.conversation || conv);
+          if (convObj && convObj.id) {
+            openConversation(convObj).catch(() => {});
+            // navigate to a stable URL that includes the conversation id
+            try { navigate(`/home/messages?conversation=${convObj.id}`, { replace: true }); } catch (e) {}
+          }
+        } catch (e) {
+          console.error('Failed to create/get conversation from query param', e);
+        }
+      })();
+    }
+  }, [location.search, conversations]);
+
   // Loads conversations (simple pageless search)
-  const loadConversations = async () => {
+  // Accepts an optional `qOverride` so callers can request results for a
+  // different query without changing the debounced `query` state.
+  const loadConversations = async (qOverride) => {
     try {
-      const res = await api.get('/conversations', { params: { q: query } });
+      const qParam = (typeof qOverride !== 'undefined') ? qOverride : query;
+      const res = await api.get('/conversations', { params: { q: qParam } });
       const data = res.data.data || res.data;
       const conversations = data.data || data;
       console.debug('DEBUG: Loaded conversations (API):', conversations);
@@ -93,8 +138,53 @@ export default function Messages() {
       setConversations(conversations);
       // keep ref in sync immediately
       try { conversationsRef.current = conversations; } catch (err) {}
+      // If user typed a query (or we specifically requested qOverride) and the
+      // returned items lack participant data, fetch details for a small batch
+      // so client-side search can match names/emails.
+      const effectiveQ = (qOverride !== undefined) ? qOverride : query;
+      if ((effectiveQ || '').trim().length > 0) {
+        enrichConversations(conversations).catch(() => {});
+      }
     } catch (e) {
       console.error('Failed to load conversations', e);
+    }
+  };
+
+  // When searching, the list endpoint may return lightweight conversation objects
+  // without `users`/participants. To allow client-side matching on participant
+  // names/emails, fetch details for up to N conversations that are missing users.
+  const enrichConversations = async (convs) => {
+    try {
+      if (!Array.isArray(convs) || convs.length === 0) return;
+      const missing = convs.filter(c => !(c.users && c.users.length > 0));
+      if (missing.length === 0) return;
+      // limit how many we fetch to avoid thundering herd
+      const limit = 10;
+      const toFetch = missing.slice(0, limit);
+      const results = await Promise.allSettled(toFetch.map(c => api.get(`/conversations/${c.id}`)));
+      let mutated = false;
+      const copy = convs.slice();
+      results.forEach((r, idx) => {
+        if (r.status === 'fulfilled') {
+          const payload = r.value.data.data || r.value.data;
+          const fetched = payload.conversation ? payload.conversation : payload;
+          const msgs = payload.messages?.data || payload.messages || [];
+          const users = fetched.users || fetched.participants || fetched.members || [];
+          // find in copy and merge
+          const id = toFetch[idx].id;
+          const pos = copy.findIndex(x => x.id === id);
+          if (pos > -1) {
+            copy[pos] = { ...copy[pos], ...fetched, users, messages: msgs };
+            mutated = true;
+          }
+        }
+      });
+      if (mutated) {
+        setConversations(copy);
+        conversationsRef.current = copy;
+      }
+    } catch (err) {
+      // ignore enrichment errors
     }
   };
 
@@ -266,6 +356,18 @@ export default function Messages() {
   }, []);
   
   useEffect(() => { loadConversations(); }, [query]);
+  // Debounce searchTerm -> query to avoid excessive API calls while typing
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(searchTerm), 300);
+    return () => clearTimeout(id);
+  }, [searchTerm]);
+  // Also trigger an immediate server fetch while typing so server-side
+  // matches appear quickly (we still debounce `query` for regular load logic).
+  useEffect(() => {
+    if ((searchTerm || '').trim().length === 0) return;
+    // fire-and-forget: request server results for this searchTerm
+    loadConversations(searchTerm).catch(() => {});
+  }, [searchTerm]);
   useEffect(() => { loadConversations(); }, []);
   useEffect(() => {
     if (messagesEndRef.current) messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -351,8 +453,12 @@ export default function Messages() {
   }, [conversations]);
 
   // filter conversations by search query (searching display name)
+  // Use the live `searchTerm` for immediate client-side filtering so typing
+  // gives instant results. `query` is still used for server-side searches
+  // (debounced). Prefer `searchTerm` when present.
   const filteredConversations = useMemo(() => {
-    const q = (query || '').trim().toLowerCase();
+    const activeQ = (searchTerm && String(searchTerm).trim().length > 0) ? searchTerm : query;
+    const q = (activeQ || '').trim().toLowerCase();
     if (!q) return conversations;
 
     const searchableText = (c) => {
@@ -370,8 +476,12 @@ export default function Messages() {
           if (u.display_name) parts.push(u.display_name);
           if (u.name) parts.push(u.name);
           if (u.full_name) parts.push(u.full_name);
+          if (u.first_name) parts.push(u.first_name);
+          if (u.last_name) parts.push(u.last_name);
           if (u.email) parts.push(u.email);
           if (u.username) parts.push(u.username);
+          if (u.phone) parts.push(u.phone);
+          if (u.mobile) parts.push(u.mobile);
         });
       } catch (err) {
         // ignore
@@ -379,8 +489,13 @@ export default function Messages() {
       return parts.join(' ').toLowerCase();
     };
 
-    return conversations.filter(c => searchableText(c).includes(q));
-  }, [conversations, query]);
+    // Support simple tokenized matching: split query into tokens and require every token to match somewhere
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return conversations.filter(c => {
+      const hay = searchableText(c);
+      return tokens.every(t => hay.includes(t));
+    });
+  }, [conversations, query, searchTerm]);
 
   // Subscribe to conversation channels for realtime updates (sidebar + active convo)
   useEffect(() => {
@@ -545,9 +660,9 @@ return (
         <div style={{padding: '16px', flex: '1', overflowY: 'auto', display: 'flex', flexDirection: 'column'}}>
           {/* Search Bar */}
           <div style={{ position: 'relative', marginBottom: '16px' }}>
-              <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+        <input
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by name..."
               style={{
                   width: '100%', padding: '10px 12px', borderRadius: '8px',
@@ -555,10 +670,10 @@ return (
               }}
               />
           </div>
-          {/* Conversation List */}
-          <div style={{ color: '#000', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {conversations.length > 0 ? (
-                  conversations.map(c => {
+      {/* Conversation List */}
+      <div style={{ color: '#000', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {filteredConversations.length > 0 ? (
+          filteredConversations.map(c => {
                       const isActive = activeConv?.id === c.id;
                       const displayName = getDisplayNameForConversation(c);
                       return (
@@ -586,7 +701,7 @@ return (
                           </div>
                       );
                   })
-              ) : (
+        ) : (
                   <div style={{textAlign: 'center', color: '#64748b', marginTop: '40px'}}>
                       No conversations found.
                   </div>
@@ -653,4 +768,3 @@ return (
     </div>
   );
 }
-

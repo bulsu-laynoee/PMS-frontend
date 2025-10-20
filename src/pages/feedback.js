@@ -8,7 +8,12 @@ import 'assets/feedback.css';
 function timeAgo(iso) {
   if (!iso) return '';
   try {
-    const then = new Date(iso);
+    // --- THIS IS THE FIX ---
+    // Force the timestamp to be parsed as UTC by appending 'Z' if it's missing.
+    // This prevents the browser from assuming it's in the local timezone.
+    const then = new Date(String(iso).endsWith('Z') ? iso : iso + 'Z');
+    // --- END OF FIX ---
+
     const diffSeconds = Math.floor((Date.now() - then.getTime()) / 1000);
     if (diffSeconds < 60) return `${diffSeconds}s ago`;
     const diffMins = Math.floor(diffSeconds / 60);

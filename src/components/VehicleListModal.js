@@ -1,107 +1,208 @@
 import React, { useState, useEffect } from 'react';
 import api, { getImageUrl } from '../utils/api';
 import VehicleModal from './VehicleModal';
-import { Box, Heading, Table, Thead, Tbody, Tr, Th, Td, Button, Spinner } from '@chakra-ui/react';
+import {
+    Box,
+    Heading,
+    Table,
+    Thead,
+    Tbody,
+    Tr,
+    Th,
+    Td,
+    Button,
+    Spinner,
+    Text,        // Added
+    VStack,      // Added
+    HStack,      // Added
+    IconButton,  // Added
+    Tag,         // Added
+    Center       // Added
+} from '@chakra-ui/react';
 import Modal from 'components/Modal';
+import { FiEdit, FiFileText, FiPlus } from 'react-icons/fi'; // Added icons
 
 export default function VehicleListModal({ user, onClose, onUpdated }) {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(''); // Keep for potential non-alert messages
 
   const load = async () => {
     setLoading(true);
+    setMessage(''); // Clear previous messages
     try {
       const res = await api.get('/vehicles', { params: { user_id: user.id } });
-      // backend returns either {data: [...] } or [...]
       const list = res.data.data || res.data || [];
-      // ensure we only show vehicles for this user
+      // Ensure we only show vehicles for this specific user ID
       setVehicles(list.filter(v => Number(v.user_id) === Number(user.id)));
     } catch (err) {
       console.error('Failed to load vehicles', err);
-      setMessage('Failed to load vehicles');
+      setMessage('Failed to load vehicles. Please try again.'); // More user-friendly error
     } finally {
       setLoading(false);
     }
   };
 
-  // Load vehicles when the modal receives a user. `load` is stable here
-  // and should not be included in the dependency array to avoid
-  // re-running on every render (which caused repeated requests).
-  useEffect(() => { if (user) load(); }, [user]);
+  // Load vehicles when the modal receives a user
+  useEffect(() => {
+      if (user?.id) { // Only load if user.id is present
+          load();
+      } else {
+          setLoading(false); // Stop loading if no valid user
+          setVehicles([]);
+          setMessage('Invalid user selected.');
+      }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]); // Depend only on user.id
 
   const handleSuccess = () => {
     setEditing(null);
-    load();
-    if (onUpdated) onUpdated();
+    setShowEditModal(false); // Close edit modal on success
+    setShowAddModal(false);  // Close add modal on success
+    load(); // Reload the list
+    if (onUpdated) onUpdated(); // Notify parent if needed
   };
 
   const [showAddModal, setShowAddModal] = React.useState(false);
   const [showEditModal, setShowEditModal] = React.useState(false);
 
-  // open edit modal when editing is set
+  // open edit modal when editing vehicle is set
   useEffect(() => {
     setShowEditModal(!!editing);
   }, [editing]);
 
   return (
-    <Box p={4} maxW={{ base: '90vw', md: '720px' }} minW={{ md: '560px' }}>
-      <Heading size="md">Vehicles for {user?.name}</Heading>
-      {loading ? (
-        <Spinner mt={4} />
-      ) : (
-        <Box mt={4}>
-          {vehicles.length === 0 ? <Box>No vehicles</Box> : (
-            <Table variant="simple" size="sm">
-              <Thead>
-                <Tr><Th>Plate</Th><Th>Type</Th><Th>Color</Th><Th>OR</Th><Th>CR</Th><Th>Actions</Th></Tr>
-              </Thead>
-                <Tbody>
-                  {vehicles.map(v => (
-                    <Tr key={v.id}>
-                      <Td>{v.plate_number}</Td>
-                      <Td>{v.vehicle_type}</Td>
-                      <Td>{v.vehicle_color}</Td>
-                      <Td>
-                        {v.or_number ? <Box fontSize="sm" mb={1}>{v.or_number}</Box> : <Box fontSize="sm" color="gray.500" mb={1}>—</Box>}
-                        {v.or_path ? (
-                          <Button size="sm" as="a" href={getImageUrl(v.or_path)} target="_blank" rel="noreferrer">OR</Button>
-                        ) : null}
-                      </Td>
-                      <Td>
-                        {v.cr_number ? <Box fontSize="sm" mb={1}>{v.cr_number}</Box> : <Box fontSize="sm" color="gray.500" mb={1}>—</Box>}
-                        {v.cr_path ? (
-                          <Button size="sm" as="a" href={getImageUrl(v.cr_path)} target="_blank" rel="noreferrer">CR</Button>
-                        ) : null}
-                      </Td>
-                      <Td>
-                        <Button size="sm" onClick={() => setEditing(v)}>Edit</Button>
-                      </Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-            </Table>
-          )}
-        </Box>
-      )}
+    // Increased padding and set width constraints
+    <Box p={{ base: 4, md: 6 }} w="100%" maxW={{ base: '95vw', lg: '960px' }} minW={{ md: '600px' }}>
+      <VStack align="stretch" spacing={5}>
+        <Heading size="lg" textAlign="center">
+          Vehicle Management
+        </Heading>
+        <Text textAlign="center" fontSize="lg" color="gray.600" mt={-3}>
+            For User: <strong>{user?.name || 'N/A'}</strong>
+        </Text>
 
-      <Box mt={4} display="flex" justifyContent="flex-end" gap={2}>
-        <Button onClick={onClose} variant="ghost">Close</Button>
-        <Button colorScheme="red" onClick={() => setShowAddModal(true)} isDisabled={vehicles.length >= 3}>Add Vehicle</Button>
-      </Box>
+        {loading ? (
+          <Center h="200px"> <Spinner size="xl" color="red.500" /> </Center>
+        ) : (
+          <Box
+             borderWidth="1px"
+             borderRadius="lg"
+             overflow="hidden" // Ensures border radius applies to table corners
+             boxShadow="sm"
+          >
+            {/* Added overflow for responsiveness */}
+            <Box overflowX="auto">
+                {vehicles.length === 0 ? (
+                    <Center p={10}>
+                        <Text color="gray.500" fontStyle="italic">No vehicles registered for this user.</Text>
+                    </Center>
+                 ) : (
+                    <Table variant="striped" colorScheme="gray" size="md">
+                        <Thead bg="gray.100">
+                        <Tr>
+                            <Th textAlign="center">Plate No.</Th>
+                            <Th textAlign="center">Type</Th>
+                            <Th textAlign="center">Color</Th>
+                            <Th textAlign="center">Brand</Th>
+                            <Th textAlign="center">Model</Th>
+                            <Th textAlign="center">OR No.</Th>
+                            <Th textAlign="center">OR Doc</Th>
+                            <Th textAlign="center">CR No.</Th>
+                            <Th textAlign="center">CR Doc</Th>
+                            <Th textAlign="center">Actions</Th>
+                        </Tr>
+                        </Thead>
+                        <Tbody>
+                        {vehicles.map(v => (
+                            <Tr key={v.id} _hover={{ bg: "red.50" }}>
+                                <Td textAlign="center"><Tag size="md" variant="solid" colorScheme='teal'>{v.plate_number || 'N/A'}</Tag></Td>
+                                <Td textAlign="center">{v.vehicle_type || 'N/A'}</Td>
+                                <Td textAlign="center">{v.vehicle_color || 'N/A'}</Td>
+                                <Td textAlign="center">{v.brand || 'N/A'}</Td>
+                                <Td textAlign="center">{v.model || 'N/A'}</Td>
+                                <Td textAlign="center">{v.or_number || <Text as="span" color="gray.400">—</Text>}</Td>
+                                <Td textAlign="center">
+                                    {v.or_path ? (
+                                    <IconButton
+                                        size="sm"
+                                        as="a"
+                                        href={getImageUrl(v.or_path)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="View OR Document"
+                                        icon={<FiFileText />}
+                                        colorScheme="blue"
+                                        variant="ghost"
+                                    />
+                                    ) : <Text as="span" color="gray.400">—</Text>}
+                                </Td>
+                                <Td textAlign="center">{v.cr_number || <Text as="span" color="gray.400">—</Text>}</Td>
+                                <Td textAlign="center">
+                                    {v.cr_path ? (
+                                    <IconButton
+                                        size="sm"
+                                        as="a"
+                                        href={getImageUrl(v.cr_path)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        aria-label="View CR Document"
+                                        icon={<FiFileText />}
+                                        colorScheme="blue"
+                                        variant="ghost"
+                                    />
+                                    ) : <Text as="span" color="gray.400">—</Text>}
+                                </Td>
+                                <Td textAlign="center">
+                                    <IconButton
+                                        size="sm"
+                                        icon={<FiEdit />}
+                                        aria-label="Edit Vehicle"
+                                        onClick={() => setEditing(v)}
+                                        colorScheme="gray"
+                                        variant="outline"
+                                    />
+                                </Td>
+                            </Tr>
+                        ))}
+                        </Tbody>
+                    </Table>
+                )}
+             </Box>
+          </Box>
+        )}
 
+        {message && <Text color="red.600" textAlign="center">{message}</Text>}
+
+        {/* Action Buttons at the bottom */}
+        <HStack justifyContent="flex-end" spacing={3}>
+          <Button onClick={onClose} variant="ghost">Close</Button>
+          <Button
+              colorScheme="red"
+              leftIcon={<FiPlus />}
+              onClick={() => setShowAddModal(true)}
+              // --- THIS IS THE CHANGE ---
+              isDisabled={vehicles.length >= 3}
+            >
+              Add Vehicle {vehicles.length < 3 ? '' : '(Max Reached)'} {/* Optional: Add text indication */}
+          </Button>
+        </HStack>
+      </VStack>
+
+      {/* --- Modals --- */}
       {/* Add Modal */}
-      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={`Add vehicle for ${user?.name}`} maxWidth={{ base: '95vw', md: '760px' }}>
-        <VehicleModal user={user} onClose={() => setShowAddModal(false)} onSuccess={() => { setShowAddModal(false); handleSuccess(); }} />
+      <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={`Add Vehicle`} maxWidth={{ base: '95vw', md: '760px' }}>
+         {/* Render only when showAddModal is true */}
+        {showAddModal && <VehicleModal user={user} onClose={() => setShowAddModal(false)} onSuccess={handleSuccess} />}
       </Modal>
 
       {/* Edit Modal */}
-      <Modal isOpen={showEditModal} onClose={() => { setEditing(null); setShowEditModal(false); }} title={`Edit vehicle for ${user?.name}`} maxWidth={{ base: '95vw', md: '760px' }}>
-        {editing && <VehicleModal user={user} vehicle={editing} onClose={() => { setEditing(null); setShowEditModal(false); }} onSuccess={() => { setEditing(null); setShowEditModal(false); handleSuccess(); }} />}
+      <Modal isOpen={showEditModal} onClose={() => setEditing(null)} title={`Edit Vehicle`} maxWidth={{ base: '95vw', md: '760px' }}>
+        {/* Render only when editing is not null */}
+        {editing && <VehicleModal user={user} vehicle={editing} onClose={() => setEditing(null)} onSuccess={handleSuccess} />}
       </Modal>
 
-      {message && <Box mt={2}>{message}</Box>}
     </Box>
   );
 }
