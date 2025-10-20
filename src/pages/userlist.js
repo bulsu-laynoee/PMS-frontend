@@ -95,6 +95,10 @@ const UserList = () => {
     const userRole = (u.role || '').toLowerCase();
     // hide Admins
     if (userRole === 'admin') return false;
+    // Exclude users still marked as pending (may be stored on nested user_details/userDetail/user_detail)
+    const ud = u.user_details || u.userDetail || u.user_detail || {};
+    if (ud && (ud.from_pending === 1 || ud.from_pending === true || String(ud.from_pending) === '1')) return false;
+    if (u.from_pending === 1 || u.from_pending === true || String(u.from_pending) === '1') return false;
     // filter by active role
     if (activeRole !== 'All' && (u.role || '') !== activeRole) return false;
     // filter by search
