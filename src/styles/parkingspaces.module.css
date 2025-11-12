@@ -153,6 +153,22 @@
   box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
 }
 
+/* Error styling for plate search input when validation fails */
+.search-input-error {
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.08) !important;
+}
+
+.plate-error-message {
+  color: #B91C1C;
+  background: #FFF1F2;
+  border: 1px solid #FCA5A5;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
 .stat-item {
   display: flex;
   flex-direction: column;

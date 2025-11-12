@@ -56,6 +56,7 @@ export default function PendingList() {
   // State for Reject modal
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [userToReject, setUserToReject] = useState(null);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // State for Approve modal
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
@@ -161,54 +162,77 @@ export default function PendingList() {
   users.forEach(u => { const pos = u.position || u.role || (u.position === null ? 'Student' : 'Student'); if (roleCount[pos] !== undefined) roleCount[pos]++; });
   const filtered = users.filter(u => (u.position || u.role || 'Student') === activeRole && ((u.name || '').toLowerCase().includes(search.toLowerCase()) || (u.email || '').toLowerCase().includes(search.toLowerCase())));
   async function previewFile(path) {
-    // Intensive logging: always print the incoming path and its raw type
-      console.log('[PendingList] previewFile called', { path });
+    // Improved preview logic: normalize, try API image endpoint, on 404/403 try encoded path, then fall back to raw URL
+    console.log('[PendingList] previewFile called', { path });
     if (!path) {
       console.debug('[PendingList] previewFile - empty path, aborting');
       return;
     }
-    // guard against stored boolean false or '0' values
     const s = String(path).trim();
     console.debug('[PendingList] previewFile - normalized string', { s });
-      console.log('[PendingList] previewFile - normalized string', { s });
     if (!s || s === '0' || s.toLowerCase() === 'false') {
       console.debug('[PendingList] previewFile - path is falsy after normalization, aborting', { s });
       return;
     }
-    // Keep slashes in the path so backend route with wildcard can resolve storage path
-    const clean = s.startsWith('/') ? s.slice(1) : s;
-    const url = getImageUrl(clean);
-    console.debug('[PendingList] previewFile - clean and url', { clean, url });
-    console.log('[PendingList] previewFile - clean and url', { clean, url });
+
+    // If the incoming path is a full URL, prefer using normalizeToApiImageUrl which will return it as-is or convert storage URLs
+    const url = normalizeToApiImageUrl(s);
+    console.debug('[PendingList] previewFile - initial url', { url });
 
     try {
-      // Try to fetch the file and open as a blob so images and PDFs render in a new tab
       console.debug('[PendingList] previewFile - fetching', { url });
-    console.log('[PendingList] previewFile - fetching', { url });
-      const res = await fetch(url, { credentials: 'include' });
-      console.debug('[PendingList] previewFile - fetch response', { ok: res.ok, status: res.status, statusText: res.statusText, headers: res.headers && typeof res.headers.get === 'function' ? { 'content-type': res.headers.get('content-type') } : null });
-        console.log('[PendingList] previewFile - fetch response', { ok: res.ok, status: res.status, statusText: res.statusText, headers: res.headers && typeof res.headers.get === 'function' ? { 'content-type': res.headers.get('content-type') } : null });
+      let res = await fetch(url, { credentials: 'include' });
+      console.debug('[PendingList] previewFile - fetch response', { ok: res.ok, status: res.status, statusText: res.statusText });
+
+      // If not ok and looks like a server-side 404/403 for unencoded path, try encoded variant
+      if (!res.ok && (res.status === 404 || res.status === 403)) {
+        try {
+          const cleaned = url.replace(/^[^/]*\/api\/image\//, '');
+          const encoded = encodeURIComponent(cleaned).replace(/%2F/g, '/');
+          const alt = `${API_BASE_URL.replace(/\/$/, '')}/api/image/${encoded}`;
+          console.debug('[PendingList] previewFile - retrying with encoded path', { alt });
+          res = await fetch(alt, { credentials: 'include' });
+          console.debug('[PendingList] previewFile - encoded fetch response', { ok: res.ok, status: res.status });
+          if (res.ok) {
+            // replace url for blob fetch below
+            console.debug('[PendingList] previewFile - encoded fetch succeeded, using alt url', { alt });
+          } else {
+            console.debug('[PendingList] previewFile - encoded fetch also failed', { status: res.status });
+          }
+        } catch (encErr) {
+          console.debug('[PendingList] previewFile - encoded retry failed', encErr);
+        }
+      }
+
       if (!res.ok) {
+        // If the normalize returned a full external URL, open it directly as a last-resort fallback
+        if (/^https?:\/\//i.test(s)) {
+          console.debug('[PendingList] previewFile - opening original full URL fallback', { s });
+          window.open(s, '_blank');
+          return;
+        }
+
         showAlert(`Preview failed: ${res.status} ${res.statusText}`, 'error');
-        // as a fallback attempt to open the direct URL in a new tab
-        console.debug('[PendingList] previewFile - opening fallback url in new tab', { url });
-          console.log('[PendingList] previewFile - opening fallback url in new tab', { url });
+        console.debug('[PendingList] previewFile - opening url in new tab as fallback', { url });
         window.open(url, '_blank');
         return;
       }
 
       const blob = await res.blob();
       console.debug('[PendingList] previewFile - blob obtained', { size: blob.size, type: blob.type });
-        console.log('[PendingList] previewFile - blob obtained', { size: blob.size, type: blob.type });
       const blobUrl = URL.createObjectURL(blob);
-      // Open the blob in a new tab/window
       window.open(blobUrl, '_blank');
-      // optional: revokeObjectURL after a delay to allow the browser to load it
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 1000);
     } catch (e) {
-        console.error('[PendingList] previewFile - fetch exception, falling back to direct open', e, { url });
-      // Fallback: open backend URL directly (may work if CORS/proxy allows)
-      try { window.open(url, '_blank'); } catch (ow) { console.error('[PendingList] previewFile - fallback window.open failed', ow); }
+      console.error('[PendingList] previewFile - fetch exception, falling back to direct open', e, { url });
+      // fallback: if original looks like a url, open it; otherwise open normalized url
+      try {
+        if (/^https?:\/\//i.test(s)) {
+          window.open(s, '_blank');
+        } else {
+          window.open(url, '_blank');
+        }
+      } catch (ow) { console.error('[PendingList] previewFile - fallback window.open failed', ow); }
     }
   }
 
@@ -281,7 +305,8 @@ export default function PendingList() {
         const storageIndex = urlObj.pathname.indexOf('/storage/');
         if (storageIndex >= 0) {
           const rel = urlObj.pathname.substring(storageIndex + '/storage/'.length) + (urlObj.hash || '');
-          return `${API_BASE_URL.replace(/\/$/, '')}/api/image/${rel.replace(/^\/+/, '')}`;
+          const encoded = encodeURIComponent(rel.replace(/^\/+/, '')).replace(/%2F/g, '/');
+          return `${API_BASE_URL.replace(/\/$/, '')}/api/image/${encoded}`;
         }
         // otherwise return full URL as-is
         return s;
@@ -296,7 +321,8 @@ export default function PendingList() {
     if (s.startsWith('app/public/')) s = s.substring('app/public/'.length);
     if (s.startsWith('public/')) s = s.substring('public/'.length);
 
-    return `${API_BASE_URL.replace(/\/$/, '')}/api/image/${s}`;
+    const encodedRel = encodeURIComponent(s).replace(/%2F/g, '/');
+    return `${API_BASE_URL.replace(/\/$/, '')}/api/image/${encodedRel}`;
   }
 
   function handleApproveClick(user) {
@@ -372,9 +398,19 @@ export default function PendingList() {
   async function confirmReject() {
     if (!userToReject) return;
     const user = userToReject;
+    setIsRejecting(true);
 
     try {
       console.debug('[PendingList] Reject payload', { url: `${api.defaults.baseURL}/users/${user.id}` });
+
+      // Ensure CSRF cookie is initialized for Sanctum-protected endpoints (no-op if not used)
+      try {
+        await api.initCsrf();
+      } catch (csrfErr) {
+        // Not fatal; proceed and allow fallback logic to handle failures
+        console.debug('[PendingList] initCsrf failed (continuing):', csrfErr?.message || csrfErr);
+      }
+
       try {
         const res = await api.delete(`/users/${user.id}`);
         console.debug('[PendingList] Reject response', { status: res.status, data: res.data });
@@ -385,18 +421,22 @@ export default function PendingList() {
         const url = `${origin}/api/users/${user.id}`;
         const fres = await fetch(url, { method: 'DELETE', credentials: 'include' });
         if (!fres.ok) {
+          if (fres.status === 401) {
+            setAuthRequired(true);
+          }
           let msg = 'Failed to reject';
           try {
             const txt = await fres.text();
             console.error('[PendingList] Reject failed response body:', txt.slice(0, 2000));
-            try { const dj = JSON.parse(txt); if (dj?.message) msg = dj.message; } catch (_) {}
+            try { const dj = JSON.parse(txt); if (dj?.message) msg = dj.message; else if (dj?.errors) msg = Object.values(dj.errors).flat().join('\n'); } catch (_) {}
           } catch (e) {
             console.error('[PendingList] Failed to read reject response body', e);
           }
           throw new Error(msg);
         }
       }
-      setUsers(users.filter(u => u.id !== user.id));
+
+      setUsers(prev => prev.filter(u => u.id !== user.id));
       try { showAlert(`${user.name || 'User'} rejected and deleted`, 'success', 4000); } catch (e) { console.debug('[PendingList] showAlert failed',e); }
     } catch (e) {
       console.error('Reject failed', e);
@@ -405,6 +445,7 @@ export default function PendingList() {
       setErrorMessage(msg);
       setTimeout(() => setErrorMessage(''), 8000);
     } finally {
+      setIsRejecting(false);
       setShowRejectConfirm(false);
       setUserToReject(null);
     }
@@ -465,7 +506,7 @@ export default function PendingList() {
         <div className="right-actions">
           <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} />
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            <option value="newest">Newest TO Oldest</option>
+            <option value="newest">Newest to Oldest</option>
             <option value="oldest">Oldest to Newest</option>
           </select>
         </div>
@@ -635,8 +676,8 @@ export default function PendingList() {
               <button className="modal-button modal-button-secondary" onClick={cancelReject}>
                 Cancel
               </button>
-              <button className="modal-button modal-button-danger" onClick={confirmReject}>
-                Reject
+              <button className="modal-button modal-button-danger" onClick={confirmReject} disabled={isRejecting}>
+                {isRejecting ? 'Rejecting…' : 'Reject'}
               </button>
             </div>
           </div>

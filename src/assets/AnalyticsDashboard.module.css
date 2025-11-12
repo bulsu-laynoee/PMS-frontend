@@ -1,0 +1,145 @@
+.dashboardContainer {
+    padding: 2rem;
+    background-color: #f9fafb;
+    min-height: 100vh;
+}
+
+.dashboardTitle {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 2rem;
+}
+
+.section {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+}
+
+.sectionTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Stat Card Grid */
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+}
+
+.statCard {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+}
+
+.statCard:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.statIcon {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+}
+
+.statContent {
+    flex-grow: 1;
+}
+
+.statValue {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+.statTitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+/* Driver Report Table */
+.tableWrapper {
+    overflow-x: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.reportTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.reportTable th,
+.reportTable td {
+    padding: 0.75rem 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.reportTable th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #4b5563;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.reportTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.reportTable tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.reportTable td:first-child {
+    font-weight: 700;
+    color: #374151;
+}
+
+.reportCount {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #dc2626; /* Red for reports */
+    font-weight: 600;
+    background-color: #fef2f2;
+    padding: 0.25rem 0.6rem;
+    border-radius: 99px;
+}
+
+/* Loading and Error States */
+.loading, .error {
+    text-align: center;
+    font-size: 1.25rem;
+    color: #6b7280;
+    padding: 4rem;
+}
+
+.error {
+    color: #dc2626;
+}

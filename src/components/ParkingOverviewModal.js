@@ -1,28 +1,44 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../pages/ParkingAssignmentPage.module.css';
 import api from '../utils/api';
 
 const ParkingOverviewModal = ({ layout, assignments, onClose, fetchLayout, fetchAssignments }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [searchPlate, setSearchPlate] = useState('');
-    const [searchSlotName, setSearchSlotName] = useState('');
+    const navigate = useNavigate();
+    const [smartSearch, setSmartSearch] = useState('');
 
-    // Filter slots by assignee name, plate number, or slot metadata name
-    const filteredSlots = layout.parking_slots.filter(slot => {
+    // Smart search: matches assignee name, vehicle plate, or slot name/number
+    const filteredSlots = (layout.parking_slots || []).filter(slot => {
         const assignment = assignments[String(slot.id)];
-        const nameMatch = searchTerm.trim() === '' || (assignment && assignment.name && assignment.name.toLowerCase().includes(searchTerm.toLowerCase()));
-        const plateMatch = searchPlate.trim() === '' || (assignment && assignment.vehicle_plate && assignment.vehicle_plate.toLowerCase().includes(searchPlate.toLowerCase()));
-        // Search by slot metadata.name (case-insensitive)
+        const q = (smartSearch || '').trim().toLowerCase();
+        if (!q) return true; // no filter
+
+        const checks = [];
+        if (assignment) {
+            if (assignment.name) checks.push(String(assignment.name).toLowerCase());
+            if (assignment.vehicle_plate) checks.push(String(assignment.vehicle_plate).toLowerCase());
+            if (assignment.vehicle_details) checks.push(String(assignment.vehicle_details).toLowerCase());
+        }
+
+        // Slot identifiers
         const slotName = slot.metadata && slot.metadata.name ? String(slot.metadata.name) : '';
-        const slotNameMatch = searchSlotName.trim() === '' || slotName.toLowerCase().includes(searchSlotName.toLowerCase());
-        return nameMatch && plateMatch && slotNameMatch;
+        if (slot.name) checks.push(String(slot.name).toLowerCase());
+        if (slot.space_number) checks.push(String(slot.space_number).toLowerCase());
+        if (slot.slot_number) checks.push(String(slot.slot_number).toLowerCase());
+        if (slotName) checks.push(slotName.toLowerCase());
+
+        // Also include space_status and type for convenience
+        if (slot.space_status) checks.push(String(slot.space_status).toLowerCase());
+        if (slot.space_type) checks.push(String(slot.space_type).toLowerCase());
+
+        return checks.some(field => field && field.includes(q));
     });
 
     return (
         <div className={styles.modalOverlay}>
             <div className={styles.modalContent}>
                 <div className={styles.modalHeader}>
-                    <h2 className={styles.tableTitle}>Parking Space Overview</h2>
+                    <h2 className={styles.tableTitle}>{layout?.name ? `${layout.name} Parking Overview` : 'Parking Space Overview'}</h2>
                     <button 
                         className={styles.closeButton}
                         onClick={onClose}
@@ -33,24 +49,11 @@ const ParkingOverviewModal = ({ layout, assignments, onClose, fetchLayout, fetch
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
                     <input
                         type="text"
-                        placeholder="Search by Name"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', minWidth: '180px' }}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Search by Plate Number"
-                        value={searchPlate}
-                        onChange={e => setSearchPlate(e.target.value)}
-                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', minWidth: '180px' }}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Search by Slot Name"
-                        value={searchSlotName}
-                        onChange={e => setSearchSlotName(e.target.value)}
-                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', minWidth: '180px' }}
+                        placeholder="Search name, plate, or slot..."
+                        value={smartSearch}
+                        onChange={e => setSmartSearch(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { /* let the table show results */ } }}
+                        style={{ padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', minWidth: '360px' }}
                     />
                 </div>
                 <div className={styles.tableWrapper}>
@@ -73,9 +76,23 @@ const ParkingOverviewModal = ({ layout, assignments, onClose, fetchLayout, fetch
                             {filteredSlots.map(slot => {
                                 const assignment = assignments[String(slot.id)];
                                 return (
-                                    <tr key={slot.id} className={slot.space_status === 'reserved' ? styles.reservedRow : 
+                                    <tr
+                                        key={slot.id}
+                                        className={slot.space_status === 'reserved' ? styles.reservedRow : 
                                                                slot.space_status === 'occupied' ? styles.occupiedRow : 
-                                                               styles.availableRow}>
+                                                               styles.availableRow}
+                                        onClick={() => {
+                                            // Navigate to the assignment page and focus the slot
+                                            try {
+                                                navigate(`/home/parking-assignment/${layout.id}?slot=${slot.id}`);
+                                            } catch (err) {
+                                                console.warn('Navigation failed:', err);
+                                            }
+                                            // Close modal after navigating
+                                            if (typeof onClose === 'function') onClose();
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <td>{slot.metadata && slot.metadata.name ? slot.metadata.name : (slot.name || slot.space_number)}</td>
                                         <td>
                                             <span className={`${styles.statusBadge} ${styles[slot.space_status]}`}>
@@ -93,7 +110,8 @@ const ParkingOverviewModal = ({ layout, assignments, onClose, fetchLayout, fetch
                                             {assignment && (
                                                 <button
                                                     className={styles.unassignTableButton}
-                                                    onClick={async () => {
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
                                                         if (window.confirm('Are you sure you want to unassign this parking space?')) {
                                                             try {
                                                                 await api.initCsrf();

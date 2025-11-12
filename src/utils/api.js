@@ -7,8 +7,8 @@ import { getToken } from "./auth";
 // Example hosted URL (commented out):
 // const HOSTED_BACKEND = 'https://bulsupms.com';
 
-export const API_BASE_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, '') || "https://bulsupms.com";
-
+export const API_BASE_URL = process.env.REACT_APP_API_URL?.replace(/\/api\/?$/, '') || "http://localhost:8000";
+  
 // Create axios instance with base API URL and enable credentials for CSRF
 const api = axios.create({
   // Use the normalized API origin and add the '/api' prefix so frontend paths like '/admin/...' become '/api/admin/...'
@@ -18,6 +18,12 @@ const api = axios.create({
 
 // Default request timeout (ms) to avoid silent hangs in the browser
 api.defaults.timeout = 10000; // 10 seconds
+
+// Expose the resolved base URL for easier debugging in the browser console
+try {
+  // eslint-disable-next-line no-console
+  console.log('[api] resolved baseURL', api.defaults.baseURL);
+} catch (e) {}
 
 // Debug logging to verify API URL
 // Debug logging removed for production/dev cleanliness. Set REACT_APP_API_URL to override the base URL.
@@ -59,6 +65,30 @@ api.interceptors.response.use(
       const duration = cfg.metadata ? new Date().getTime() - cfg.metadata.startTime : null;
       // eslint-disable-next-line no-console
       console.error('[api] response error', { url: cfg.url, message: error.message, duration, code: error.code, status: error.response?.status });
+      // Provide richer diagnostic details when available
+      if (error.response) {
+        // Response received from server (non-2xx)
+        // eslint-disable-next-line no-console
+        console.error('[api] response error details', {
+          url: cfg.url,
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers,
+        });
+      } else if (error.request) {
+        // Request was sent but no response received
+        // eslint-disable-next-line no-console
+        console.error('[api] no response received, request:', error.request);
+      } else {
+        // Something went wrong setting up the request
+        // eslint-disable-next-line no-console
+        console.error('[api] request setup error:', error.message);
+      }
+      try {
+        // axios errors provide toJSON which can be helpful
+        // eslint-disable-next-line no-console
+        console.error('[api] error.toJSON()', error.toJSON ? error.toJSON() : null);
+      } catch (inner) {}
     } catch (e) {}
     return Promise.reject(error);
   }

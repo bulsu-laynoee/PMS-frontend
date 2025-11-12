@@ -1,7 +1,7 @@
 // NOTE: We render texts below inside an SVG layer. SVG <text> elements now use rotation transforms.
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import styles from './ParkingAssignmentPage.module.css';
 import api from '../utils/api';
 import normalizeImageUrl from '../utils/imageUrl';
@@ -150,6 +150,8 @@ const ParkingAssignmentPage = () => {
     const VIEW_ZOOM_STEP = 0.1;
 
     const getMinViewScale = () => (layout && (layout.image_path || layout.background_image) ? 1 : ABS_MIN_VIEW_SCALE);
+
+    const location = useLocation();
 
     const handleZoomIn = () => setViewScale(s => Math.min(MAX_VIEW_SCALE, +(s + VIEW_ZOOM_STEP).toFixed(2)));
     const handleZoomOut = () => setViewScale(s => Math.max(getMinViewScale(), +(s - VIEW_ZOOM_STEP).toFixed(2)));
@@ -997,6 +999,28 @@ const ParkingAssignmentPage = () => {
         }
     }, [layout, canvasWidth, canvasHeight]);
 
+    // If a slot query param is present, focus and center that slot after layout & assignments load
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const slotParam = params.get('slot');
+        if (!slotParam) return;
+        if (!layout || !assignments) return;
+        const slot = (layout.parking_slots || []).find(s => String(s.id) === String(slotParam));
+        if (!slot) return;
+
+        // select and center on the slot after a short delay to allow layout rendering
+        setSelectedSlot(slot);
+        setTimeout(() => {
+            const el = layoutSectionRef.current;
+            if (!el) return;
+            const slotCenterX = (slot.x_coordinate || slot.position_x || 0) + (slot.width || 0) / 2;
+            const slotCenterY = (slot.y_coordinate || slot.position_y || 0) + (slot.height || 0) / 2;
+            el.scrollLeft = Math.max(0, slotCenterX * viewScale - (el.clientWidth / 2));
+            el.scrollTop = Math.max(0, slotCenterY * viewScale - (el.clientHeight / 2));
+            setHoveredSlotId(slot.id);
+        }, 150);
+    }, [location.search, layout, assignments, viewScale]);
+
     // On window resize, if the user is at default zoom (1), auto-fit the canvas
     // so they don't need to change browser zoom to see the whole layout.
     useEffect(() => {
@@ -1281,13 +1305,20 @@ const ParkingAssignmentPage = () => {
                             {layout.parking_slots.map(slot => {
                                 const isAssigned = slot.space_status === 'occupied' || slot.space_status === 'reserved';
                                 const spaceTypeClass = styles[slot.space_type] || '';
+                                const slotParam = new URLSearchParams(location.search).get('slot');
+                                const isFocused = (selectedSlot && String(selectedSlot.id) === String(slot.id)) ||
+                                    String(hoveredSlotId) === String(slot.id) ||
+                                    String(slotParam) === String(slot.id);
+                                const classNames = [
+                                    styles.parkingSpace,
+                                    slot.space_status === 'reserved' ? styles.reserved : (slot.space_status === 'occupied' ? styles.occupied : ''),
+                                    spaceTypeClass,
+                                    isFocused ? styles.slotHighlight : ''
+                                ].filter(Boolean).join(' ');
                                 return (
                                     <div
                                         key={slot.id}
-                                        className={`${styles.parkingSpace} 
-                                            ${slot.space_status === 'reserved' ? styles.reserved : 
-                                            slot.space_status === 'occupied' ? styles.occupied : ''}
-                                            ${spaceTypeClass}`}
+                                        className={classNames}
                                         style={{
                                             left: `${slot.x_coordinate}px`,
                                             top: `${slot.y_coordinate}px`,

@@ -53,7 +53,7 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
           setVehicles([]);
           setMessage('Invalid user selected.');
       }
-   // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]); // Depend only on user.id
 
   const handleSuccess = () => {
@@ -87,20 +87,20 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
           <Center h="200px"> <Spinner size="xl" color="red.500" /> </Center>
         ) : (
           <Box
-             borderWidth="1px"
-             borderRadius="lg"
-             overflow="hidden" // Ensures border radius applies to table corners
-             boxShadow="sm"
+            borderWidth="1px"
+            borderRadius="lg"
+            overflow="hidden" // Ensures border radius applies to table corners
+            boxShadow="sm"
           >
             {/* Added overflow for responsiveness */}
             <Box overflowX="auto">
-                {vehicles.length === 0 ? (
-                    <Center p={10}>
-                        <Text color="gray.500" fontStyle="italic">No vehicles registered for this user.</Text>
-                    </Center>
-                 ) : (
-                    <Table variant="striped" colorScheme="gray" size="md">
-                        <Thead bg="gray.100">
+              {vehicles.length === 0 ? (
+                  <Center p={10}>
+                      <Text color="gray.500" fontStyle="italic">No vehicles registered for this user.</Text>
+                  </Center>
+                ) : (
+                  <Table variant="striped" colorScheme="gray" size="md">
+                      <Thead bg="gray.100">
                         <Tr>
                             <Th textAlign="center">Plate No.</Th>
                             <Th textAlign="center">Type</Th>
@@ -108,68 +108,36 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
                             <Th textAlign="center">Brand</Th>
                             <Th textAlign="center">Model</Th>
                             <Th textAlign="center">OR No.</Th>
-                            <Th textAlign="center">OR Doc</Th>
                             <Th textAlign="center">CR No.</Th>
-                            <Th textAlign="center">CR Doc</Th>
                             <Th textAlign="center">Actions</Th>
                         </Tr>
-                        </Thead>
-                        <Tbody>
-                        {vehicles.map(v => (
-                            <Tr key={v.id} _hover={{ bg: "red.50" }}>
-                                <Td textAlign="center"><Tag size="md" variant="solid" colorScheme='teal'>{v.plate_number || 'N/A'}</Tag></Td>
-                                <Td textAlign="center">{v.vehicle_type || 'N/A'}</Td>
-                                <Td textAlign="center">{v.vehicle_color || 'N/A'}</Td>
-                                <Td textAlign="center">{v.brand || 'N/A'}</Td>
-                                <Td textAlign="center">{v.model || 'N/A'}</Td>
-                                <Td textAlign="center">{v.or_number || <Text as="span" color="gray.400">—</Text>}</Td>
-                                <Td textAlign="center">
-                                    {v.or_path ? (
-                                    <IconButton
-                                        size="sm"
-                                        as="a"
-                                        href={getImageUrl(v.or_path)}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="View OR Document"
-                                        icon={<FiFileText />}
-                                        colorScheme="blue"
-                                        variant="ghost"
-                                    />
-                                    ) : <Text as="span" color="gray.400">—</Text>}
-                                </Td>
-                                <Td textAlign="center">{v.cr_number || <Text as="span" color="gray.400">—</Text>}</Td>
-                                <Td textAlign="center">
-                                    {v.cr_path ? (
-                                    <IconButton
-                                        size="sm"
-                                        as="a"
-                                        href={getImageUrl(v.cr_path)}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        aria-label="View CR Document"
-                                        icon={<FiFileText />}
-                                        colorScheme="blue"
-                                        variant="ghost"
-                                    />
-                                    ) : <Text as="span" color="gray.400">—</Text>}
-                                </Td>
-                                <Td textAlign="center">
-                                    <IconButton
-                                        size="sm"
-                                        icon={<FiEdit />}
-                                        aria-label="Edit Vehicle"
-                                        onClick={() => setEditing(v)}
-                                        colorScheme="gray"
-                                        variant="outline"
-                                    />
-                                </Td>
-                            </Tr>
-                        ))}
-                        </Tbody>
-                    </Table>
-                )}
-             </Box>
+                      </Thead>
+                      <Tbody>
+                      {vehicles.map(v => (
+                          <Tr key={v.id} _hover={{ bg: "red.50" }}>
+                              <Td textAlign="center"><Tag size="md" variant="solid" colorScheme='teal'>{v.plate_number || 'N/A'}</Tag></Td>
+                              <Td textAlign="center">{v.vehicle_type || 'N/A'}</Td>
+                              <Td textAlign="center">{v.vehicle_color || 'N/A'}</Td>
+                              <Td textAlign="center">{v.brand || 'N/A'}</Td>
+                              <Td textAlign="center">{v.model || 'N/A'}</Td>
+                              <Td textAlign="center">{v.or_number || <Text as="span" color="gray.400">—</Text>}</Td>
+                              <Td textAlign="center">{v.cr_number || <Text as="span" color="gray.400">—</Text>}</Td>
+                              <Td textAlign="center">
+                                  <IconButton
+                                      size="sm"
+                                      icon={<FiEdit />}
+                                      aria-label="Edit Vehicle"
+                                      onClick={() => setEditing(v)}
+                                      colorScheme="gray"
+                                      variant="outline"
+                                  />
+                              </Td>
+                          </Tr>
+                      ))}
+                      </Tbody>
+                  </Table>
+              )}
+            </Box>
           </Box>
         )}
 
@@ -179,13 +147,13 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
         <HStack justifyContent="flex-end" spacing={3}>
           <Button onClick={onClose} variant="ghost">Close</Button>
           <Button
-              colorScheme="red"
-              leftIcon={<FiPlus />}
-              onClick={() => setShowAddModal(true)}
-              // --- THIS IS THE CHANGE ---
-              isDisabled={vehicles.length >= 3}
-            >
-              Add Vehicle {vehicles.length < 3 ? '' : '(Max Reached)'} {/* Optional: Add text indication */}
+            colorScheme="red"
+            leftIcon={<FiPlus />}
+            onClick={() => setShowAddModal(true)}
+            // --- THIS IS THE CHANGE ---
+            isDisabled={vehicles.length >= 3}
+          >
+            Add Vehicle {vehicles.length < 3 ? '' : '(Max Reached)'} {/* Optional: Add text indication */}
           </Button>
         </HStack>
       </VStack>
@@ -193,7 +161,7 @@ export default function VehicleListModal({ user, onClose, onUpdated }) {
       {/* --- Modals --- */}
       {/* Add Modal */}
       <Modal isOpen={showAddModal} onClose={() => setShowAddModal(false)} title={`Add Vehicle`} maxWidth={{ base: '95vw', md: '760px' }}>
-         {/* Render only when showAddModal is true */}
+          {/* Render only when showAddModal is true */}
         {showAddModal && <VehicleModal user={user} onClose={() => setShowAddModal(false)} onSuccess={handleSuccess} />}
       </Modal>
 

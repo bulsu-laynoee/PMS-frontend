@@ -336,6 +336,15 @@
         box-sizing: border-box;
     }
 
+    /* Highlight for focused/queried slot (search result or selected) */
+    .slotHighlight {
+        outline: 4px solid rgba(231,111,111,0.95);
+        box-shadow: 0 8px 28px rgba(231,111,111,0.24);
+        transform: scale(1.03);
+        transition: outline-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+        z-index: 9999; /* bring above other slots */
+    }
+
     .reservedTag {
         position: absolute;
         top: 5px;

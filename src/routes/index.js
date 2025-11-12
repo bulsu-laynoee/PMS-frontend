@@ -17,6 +17,7 @@ import AdminCreateUser from 'pages/AdminCreateUser';
 import IncidentManagement from 'pages/IncidentManagement';
 import Notifications from 'pages/notifications';
 import FeedbackPage from 'pages/feedback';
+import AnalyticsDashboard from 'pages/AnalyticsDashboard';
 
 const MainRoutes = () => {
     return (
@@ -40,6 +41,7 @@ const MainRoutes = () => {
                     <Route path="incidents" element={<IncidentManagement />} />
                     <Route path="pendinglist" element={<PendingList />} />
                     <Route path="settings" element={<Settings />} />
+                    <Route path="analytics-dashboard" element={<AnalyticsDashboard />} />
                 </Route>
             </Routes>
         </Router>
